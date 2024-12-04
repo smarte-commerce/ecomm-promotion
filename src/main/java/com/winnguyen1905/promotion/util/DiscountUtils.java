@@ -13,8 +13,8 @@ public class DiscountUtils {
         // long timeUsed = eDiscount.get;
         
         // if(eDiscount.getMaxUsesPerUser() <= timeUsed) throw new BadRequestException("Use count reach to maximum");
-        if(eDiscount.getEndDate().isBefore(Instant.now())) throw new BadRequestException("Discount has been expired");
-        if(eDiscount.getUsesCount() >= eDiscount.getMaxUses()) throw new BadRequestException("Discount be used maximum");
+        // if(eDiscount.getEndDate().isBefore(Instant.now())) throw new BadRequestException("Discount has been expired");
+        // if(eDiscount.getUsesCount() >= eDiscount.getMaxUses()) throw new BadRequestException("Discount be used maximum");
         return true;
     }
 

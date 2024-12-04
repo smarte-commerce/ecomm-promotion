@@ -58,23 +58,23 @@ public class EDiscount extends EBaseAudit {
   @Column(name = "discount_code")
   private String code;
 
-  @Column(name = "discount_start_day")
+  @Column(name = "discount_start_date")
   private Instant startDate;
 
   @Column(name = "discount_end_date")
   private Instant endDate;
 
   @Min(value = 1)
-  @Column(name = "discount_max_uses")
-  private int maxUses;
+  @Column(name = "discount_usage_limit")
+  private int usageLimit;
 
   @Min(value = 0)
-  @Column(name = "discount_uses_count")
-  private int usesCount;
+  @Column(name = "discount_usage_count")
+  private int usageCount;
 
   @Min(value = 1)
-  @Column(name = "discount_max_uses_per_user")
-  private int maxUsesPerUser;
+  @Column(name = "discount_limit_usage_per_customer")
+  private int limitUsagePerCutomer;
 
   @Min(value = 0)
   @Column(name = "discount_min_order_value")
