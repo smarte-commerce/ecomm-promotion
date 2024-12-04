@@ -81,7 +81,10 @@ public class EDiscount extends EBaseAudit {
   private Double minOrderValue;
 
   @OneToMany(mappedBy = "discount", fetch = FetchType.LAZY)
-  private List<EDiscountUser> userDiscounts = new ArrayList<>();
+  private List<EDiscountUsage> discountUsages = new ArrayList<>();
+
+  @OneToMany(mappedBy = "discount", fetch = FetchType.LAZY)
+  private List<EPromotionDetail> promotionDetails = new ArrayList<>();
 
   @Column(name = "discount_is_active")
   private Boolean isActive;
@@ -89,9 +92,6 @@ public class EDiscount extends EBaseAudit {
   @Enumerated(EnumType.STRING)
   @Column(name = "discount_applies_to")
   private ApplyDiscountType appliesTo;
-  
-  @ManyToMany(mappedBy = "discounts")
-  private Set<UUID> products = new HashSet<>();
 
   @Column(name = "shop_id", nullable = false)
   private UUID shopId;

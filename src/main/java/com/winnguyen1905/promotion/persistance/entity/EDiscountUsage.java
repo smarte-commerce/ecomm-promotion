@@ -16,11 +16,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "discount_users")
-public class EDiscountUser extends EBaseAudit {
-
-  public static enum Role {
-    USER, CREATOR
-  }
+public class EDiscountUsage extends EBaseAudit {
 
   @ManyToOne
   @JoinColumn(name = "discount_id")
@@ -30,10 +26,6 @@ public class EDiscountUser extends EBaseAudit {
   private UUID userId;
 
   @Column(name = "remaining_usage")
-  private Long remainingUsage;
-
-  @Column(name = "user_role")
-  @Enumerated(EnumType.STRING)
-  private Role role;
+  private UUID orderId;
 
 }

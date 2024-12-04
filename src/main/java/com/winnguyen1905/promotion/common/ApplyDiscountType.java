@@ -3,7 +3,7 @@ package com.winnguyen1905.promotion.common;
 public enum ApplyDiscountType {
     ALL("all"),
     SPECIFIC("specific"),
-    BRANCH("branch"), 
+    SHOP("shop"), 
     CATEGORY("category");
 
     private final String applyDiscountType;

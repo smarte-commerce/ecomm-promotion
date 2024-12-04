@@ -25,7 +25,7 @@ import com.winnguyen1905.promotion.core.service.DiscountService;
 import com.winnguyen1905.promotion.exception.ResourceNotFoundException;
 import com.winnguyen1905.promotion.persistance.entity.EDiscount;
 import com.winnguyen1905.promotion.persistance.entity.EProduct;
-import com.winnguyen1905.promotion.persistance.entity.EDiscountUser;
+import com.winnguyen1905.promotion.persistance.entity.EDiscountUsage;
 import com.winnguyen1905.promotion.persistance.repository.DiscountRepository;
 import com.winnguyen1905.promotion.persistance.repository.ProductRepository;
 import com.winnguyen1905.promotion.persistance.repository.UserDiscountRepository;

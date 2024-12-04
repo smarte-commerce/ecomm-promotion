@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 
 import com.winnguyen1905.promotion.exception.BadRequestException;
 import com.winnguyen1905.promotion.persistance.entity.EDiscount;
-import com.winnguyen1905.promotion.persistance.entity.EDiscountUser;
+import com.winnguyen1905.promotion.persistance.entity.EDiscountUsage;
  
 public class DiscountUtils {
     public static Boolean isUsable(EDiscount eDiscount) {
