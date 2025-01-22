@@ -10,21 +10,24 @@ import com.winnguyen1905.promotion.core.model.request.ApplyDiscountRequest;
 import com.winnguyen1905.promotion.core.model.response.PriceStatisticsResponse;
 
 public interface DiscountService {
-  Discount handleCreateDiscountCode(Discount discount, UUID shopId);
 
-  Discount handleGetDiscount(UUID id);
+  PriceStatisticsResponse applyDiscountFactory(UUID customerId, ApplyDiscountRequest applyDiscountRequest);
 
-  Discount handleGetAllDiscountCodesByShop(UUID shopId, Pageable pageable);
+  // Discount handleCreateDiscountCode(Discount discount, UUID shopId);
 
-  Discount handleGetAllProductsRelateDiscountCode(Discount discount, Pageable pageable);
+  // Discount handleGetDiscount(UUID id);
 
-  PriceStatisticsResponse handleApplyDiscountCodeForCart(UUID customerId, ApplyDiscountRequest applyDiscountRequest, ApplyDiscountStatus applyDiscountStatus);
+  // Discount handleGetAllDiscountCodesByShop(UUID shopId, Pageable pageable);
 
-  Boolean handleVerifyDiscountCode(UUID id);
+  // Discount handleGetAllProductsRelateDiscountCode(Discount discount, Pageable pageable);
 
-  void handleDeleteDiscountCode(UUID id);
+  // PriceStatisticsResponse handleApplyDiscountCodeForCart(UUID customerId, ApplyDiscountRequest applyDiscountRequest, ApplyDiscountStatus applyDiscountStatus);
 
-  void handleCancelDiscountCode(UUID id, String username);
+  // Boolean handleVerifyDiscountCode(UUID id);
 
-  void handleCancelDiscountForCart(Discount discount, UUID customerId);
+  // void handleDeleteDiscountCode(UUID id);
+
+  // void handleCancelDiscountCode(UUID id, String username);
+
+  // void handleCancelDiscountForCart(Discount discount, UUID customerId);
 }
