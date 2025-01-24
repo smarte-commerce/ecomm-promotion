@@ -16,8 +16,7 @@ import lombok.Setter;
 @Getter
 @MappedSuperclass
 public abstract class EBase implements Serializable {
-  @Serial
-  private static final long serialVersionUID = -863164858986274318L;
+  @Serial private static final long serialVersionUID = -863164858986274318L;
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

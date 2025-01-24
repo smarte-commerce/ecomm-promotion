@@ -7,20 +7,12 @@ import com.winnguyen1905.promotion.core.model.AbstractModel;
 
 import lombok.Getter;
 import lombok.Setter;
-
-@Setter
-@Getter
-public class PagedResponse<T> extends AbstractModel {
-    private Integer maxPageItems;
-
-    private Integer page;
-    
-    private Integer size;
-
-    @JsonProperty("results")
-    private List<T> results;
-
-    private Integer totalElements;
-
-    private Integer totalPages;
+public record PagedResponse<T>(
+    int maxPageItems,
+    int page,
+    int size,
+    @JsonProperty("results") List<T> results,
+    int totalElements,
+    int totalPages
+) implements AbstractModel {
 }

@@ -2,9 +2,7 @@ package com.winnguyen1905.promotion.persistance.entity;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import com.winnguyen1905.promotion.common.ApplyDiscountType;
@@ -16,20 +14,21 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.persistence.Version;
 import jakarta.validation.constraints.Min;
+
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.Builder.Default;
 
 @Entity
 @Getter
 @Setter
+@Builder
 @Table(name = "discounts")
 public class EDiscount extends EBaseAudit {
 
@@ -37,19 +36,31 @@ public class EDiscount extends EBaseAudit {
     SHOP, GLOBAL
   }
 
+  public static enum CreatorType {
+    ADMIN, SHOP
+  }
+
   @Enumerated(EnumType.STRING)
   @Column(name = "discount_scope")
   private Scope scope;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "creator_type", nullable = false)
+  private CreatorType creatorType;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "discount_type")
+  private DiscountType discountType;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "discount_applies_to")
+  private ApplyDiscountType appliesTo;
 
   @Column(name = "discount_name")
   private String name;
 
   @Column(name = "discount_description", columnDefinition = "MEDIUMTEXT")
   private String description;
-
-  @Enumerated(EnumType.STRING)
-  @Column(name = "discount_type")
-  private DiscountType discountType;
 
   @Min(value = 0)
   @Column(name = "discount_value")
@@ -80,21 +91,27 @@ public class EDiscount extends EBaseAudit {
   @Column(name = "discount_min_order_value")
   private Double minOrderValue;
 
-  @OneToMany(mappedBy = "discount", fetch = FetchType.LAZY)
-  private List<EDiscountUsage> discountUsages = new ArrayList<>();
-
-  @OneToMany(mappedBy = "discount", fetch = FetchType.LAZY)
-  private List<EPromotionDetail> promotionDetails = new ArrayList<>();
-
   @Column(name = "discount_is_active")
   private Boolean isActive;
 
-  @Enumerated(EnumType.STRING)
-  @Column(name = "discount_applies_to")
-  private ApplyDiscountType appliesTo;
-
-  @Column(name = "shop_id", nullable = false)
+  @Column(name = "shop_id", nullable = true)
   private UUID shopId;
+
+  @Default
+  @OneToMany(mappedBy = "discount", fetch = FetchType.LAZY)
+  private List<EDiscountUsage> discountUsages = new ArrayList<>();
+
+  @Default
+  @OneToMany(mappedBy = "discount", fetch = FetchType.LAZY)
+  private List<EUserDiscount> userDiscounts = new ArrayList<>();
+
+  @ManyToOne
+  @JoinColumn(name = "promotion_id", nullable = true)
+  private EPromotion promotion;
+
+  @OneToMany(mappedBy = "discount")
+  private List<EProductDiscount> productDiscounts;
+
 
   @PrePersist
   protected void prePersist() {

@@ -4,21 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import com.winnguyen1905.promotion.core.model.AbstractModel;
+public record CheckoutResponse(PriceStatisticsResponse priceStatistics, List<CheckoutItemResponse> checkoutItems) {
 
-import lombok.Getter;
-import lombok.Setter;
+    public CheckoutResponse {
+        if (checkoutItems == null) {
+            checkoutItems = new ArrayList<>();
+        }
+    }
 
-@Getter
-@Setter
-public class CheckoutResponse extends AbstractModel {
-    private PriceStatisticsResponse priceStatistics;
-    private List<CheckoutItemReponse> checkoutItems = new ArrayList<>();
-
-    @Getter
-    @Setter
-    public static class CheckoutItemReponse extends AbstractModel {
-        private UUID cartId;
-        private PriceStatisticsResponse priceStatistics;
+    public record CheckoutItemResponse(UUID cartId, PriceStatisticsResponse priceStatistics) {
     }
 }

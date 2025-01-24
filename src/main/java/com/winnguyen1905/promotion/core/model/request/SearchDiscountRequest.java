@@ -6,6 +6,4 @@ import lombok.*;
 
 @Setter
 @Getter
-public class SearchDiscountRequest extends BaseObject<SearchDiscountRequest> {
-
-}
+public class SearchDiscountRequest extends BaseObject<SearchDiscountRequest> {}

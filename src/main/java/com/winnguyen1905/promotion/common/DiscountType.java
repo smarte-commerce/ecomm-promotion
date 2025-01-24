@@ -1,7 +1,8 @@
 package com.winnguyen1905.promotion.common;
 
 public enum DiscountType {
-  FIXED_AMOUNT("fixed_amount"), PERCENTAGE("percentage");
+  PERCENTAGE("percentage"),
+  FIXED_AMOUNT("fixed_amount");
 
   private final String discountType;
 
