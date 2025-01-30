@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.winnguyen1905.promotion.common.ApplyDiscountType;
+import com.winnguyen1905.promotion.common.DiscountCategory;
 import com.winnguyen1905.promotion.common.DiscountType;
 
 import jakarta.persistence.Column;
@@ -56,6 +57,10 @@ public class EDiscount extends EBaseAudit {
   @Column(name = "discount_applies_to")
   private ApplyDiscountType appliesTo;
 
+  @Enumerated(EnumType.STRING)
+  @Column(name = "discount_category")
+  private DiscountCategory discountCategory;
+
   @Column(name = "discount_name")
   private String name;
 
@@ -65,6 +70,10 @@ public class EDiscount extends EBaseAudit {
   @Min(value = 0)
   @Column(name = "discount_value")
   private Double value;
+
+  @Min(value = 0)
+  @Column(name = "discount_max_reduced_value")
+  private Double maxReducedValue;
 
   @Column(name = "discount_code")
   private String code;

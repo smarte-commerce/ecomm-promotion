@@ -17,7 +17,6 @@ public record CustomerCart(
   @Builder
   public static record CustomerCartWithShop(
       UUID shopId,
-      UUID discountId,
       List<CartItem> cartItems,
       PriceStatisticsResponse priceStatistic) {
   }

@@ -16,4 +16,6 @@ public interface ShopPromotionRepository extends JpaRepository<EShopPromotion, U
 
   @Query("select id from shop_promotion where shop_id in ?1 and promotion_id = ?2 and is_verified = true")
   List<UUID> findAllByShopIdsAndPromotionIdAndIsVerifiedTrue(List<UUID> ids, UUID promotionId);
+
+  Boolean existsByPromotionIdAndShopId(UUID promotionId, UUID shopId);
 }

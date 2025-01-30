@@ -2,42 +2,32 @@ package com.winnguyen1905.promotion.core.model.request;
 
 import java.time.Instant;
 import java.util.Set;
+import java.util.UUID;
 
 import com.winnguyen1905.promotion.common.ApplyDiscountType;
+import com.winnguyen1905.promotion.common.DiscountCategory;
 import com.winnguyen1905.promotion.common.DiscountType;
-import com.winnguyen1905.promotion.core.model.Product;
+import com.winnguyen1905.promotion.core.model.AbstractModel;
+import com.winnguyen1905.promotion.persistance.entity.EDiscount;
 
 import jakarta.validation.constraints.NotBlank;
 
-public class AddDiscountRequest {
-  private String name;
-
-  private String description;
-
-  private DiscountType discountType;
-
-  private Number value;
-
-  @NotBlank
-  private String code;
-
-  private Instant startDate;
-
-  private Instant endDate;
-
-  private Integer maxUses;
-
-  private Integer usesCount;
-
-  private Integer maxUsesPerUser;
-
-  private Double minOrderValue;
-
-  private Boolean isActive;
-
-  private ApplyDiscountType appliesTo;
-
-  private Set<Product> products;
-
-  private Product productList;
+public record AddDiscountRequest(
+    String name,
+    DiscountCategory discountCategory,
+    String description,
+    EDiscount.Scope scope,
+    DiscountType discountType,
+    double value,
+    @NotBlank String code,
+    Instant startDate,
+    Instant endDate,
+    Integer usageLimit,
+    Integer usesCount,
+    Integer limitUsagePerCutomer,
+    double maxReducedValue,
+    Double minOrderValue,
+    Boolean isActive,
+    ApplyDiscountType appliesTo,
+    Set<UUID> productIds) implements AbstractModel {
 }
