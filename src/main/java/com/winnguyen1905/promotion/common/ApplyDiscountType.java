@@ -1,9 +1,9 @@
 package com.winnguyen1905.promotion.common;
 
 public enum ApplyDiscountType {
-    ALL("all"),
-    SPECIFIC("specific"),
-    CATEGORY("category");
+    ALL("ALL"),
+    SPECIFIC("SPECIFIC"),
+    CATEGORY("CATEGORY");
 
     private final String applyDiscountType;
 

@@ -10,8 +10,8 @@ import org.springframework.stereotype.Repository;
 
 import com.winnguyen1905.promotion.persistance.entity.EShopPromotion;
 
-@Repository
-public interface ShopPromotionRepository extends JpaRepository<EShopPromotion, UUID> {
+// @Repository
+public interface ShopPromotionRepository {
   Optional<EShopPromotion> findByShopIdAndPromotionId(UUID shopId, UUID promotionId);
 
   @Query("select id from shop_promotion where shop_id in ?1 and promotion_id = ?2 and is_verified = true")

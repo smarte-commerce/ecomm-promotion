@@ -13,4 +13,17 @@ public record ApplyDiscountResponse(
     UUID discountId,
     Boolean isOrder,
     PriceStatisticsResponse priceStatisticsResponse) implements AbstractModel {
+  @Builder
+  public ApplyDiscountResponse(
+      UUID cartId,
+      UUID shopId,
+      UUID discountId,
+      Boolean isOrder,
+      PriceStatisticsResponse priceStatisticsResponse) {
+    this.cartId = cartId;
+    this.shopId = shopId;
+    this.discountId = discountId;
+    this.isOrder = isOrder;
+    this.priceStatisticsResponse = priceStatisticsResponse;
+  }
 }

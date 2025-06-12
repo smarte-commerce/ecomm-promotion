@@ -12,9 +12,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Entity
-@Table(name = "shop_promotion")
-public class EShopPromotion extends EBaseAudit {
+// @Entity
+// @Table(name = "shop_promotion", schema = "public")
+public class EShopPromotion {
   private double totalCommissionRate;
   private double conditionJoin;
   private UUID shopId;

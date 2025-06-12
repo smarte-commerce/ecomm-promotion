@@ -1,6 +1,7 @@
 package com.winnguyen1905.promotion.core.model.request;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -10,16 +11,14 @@ import com.winnguyen1905.promotion.common.DiscountType;
 import com.winnguyen1905.promotion.core.model.AbstractModel;
 import com.winnguyen1905.promotion.persistance.entity.EDiscount;
 
-import jakarta.validation.constraints.NotBlank;
-
 public record AddDiscountRequest(
     String name,
     DiscountCategory discountCategory,
     String description,
-    EDiscount.Scope scope,
+    EDiscount.CreatorType creatorType,
     DiscountType discountType,
     double value,
-    @NotBlank String code,
+    String code,
     Instant startDate,
     Instant endDate,
     Integer usageLimit,
@@ -28,6 +27,7 @@ public record AddDiscountRequest(
     double maxReducedValue,
     Double minOrderValue,
     Boolean isActive,
+    Set<String> categories,
     ApplyDiscountType appliesTo,
     Set<UUID> productIds) implements AbstractModel {
 }

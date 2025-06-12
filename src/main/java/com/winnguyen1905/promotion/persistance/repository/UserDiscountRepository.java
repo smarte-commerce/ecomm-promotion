@@ -12,5 +12,6 @@ import com.winnguyen1905.promotion.persistance.repository.custom.SoftDeleteRepos
 
 @Repository
 public interface UserDiscountRepository extends JpaRepository<EUserDiscount, UUID> {
+  Boolean existsByCustomerIdAndDiscountId(UUID customerId, UUID discountId);
   Optional<EUserDiscount> findByCustomerIdAndDiscountId(UUID customerId, UUID discountId);
 }

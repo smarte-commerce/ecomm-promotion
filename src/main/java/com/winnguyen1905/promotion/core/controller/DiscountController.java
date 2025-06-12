@@ -2,64 +2,39 @@ package com.winnguyen1905.promotion.core.controller;
 
 import java.util.UUID;
 
+import org.springframework.core.annotation.MergedAnnotations.Search;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
-import com.winnguyen1905.promotion.common.ApplyDiscountStatus;
-import com.winnguyen1905.promotion.core.model.Discount;
-import com.winnguyen1905.promotion.core.model.request.ApplyDiscountRequest;
-import com.winnguyen1905.promotion.core.model.response.PriceStatisticsResponse;
-import com.winnguyen1905.promotion.core.service.DiscountService;
-import com.winnguyen1905.promotion.util.OptionalExtractor;
+import com.winnguyen1905.promotion.core.model.request.*;
+import com.winnguyen1905.promotion.core.model.response.*;
+import com.winnguyen1905.promotion.secure.TAccountRequest;
 
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+public interface DiscountController {
+    // Admin endpoints
+    ResponseEntity<Void> createDiscount(TAccountRequest accountRequest, AddDiscountRequest request);
+    ResponseEntity<DiscountVm> getDiscountById(TAccountRequest accountRequest, @PathVariable UUID id);
+    ResponseEntity<Void> updateDiscountStatus(TAccountRequest accountRequest, UpdateDiscountStatusRequest request);
+    ResponseEntity<Void> assignProducts(TAccountRequest accountRequest, AssignProductsRequest request);
+    ResponseEntity<Void> assignCategories(TAccountRequest accountRequest, AssignCategoriesRequest request);
+    ResponseEntity<Void> updatePartialDiscount(TAccountRequest accountRequest, UpdateDiscountStatusRequest request);
+    ResponseEntity<Void> deleteDiscount(TAccountRequest accountRequest, @PathVariable UUID id);
+    ResponseEntity<Void> claimDiscount(TAccountRequest accountRequest, UUID discountId);
+    ResponseEntity<DiscountValidityResponse> checkDiscountValidity(TAccountRequest accountRequest, @PathVariable UUID discountId);
+    ResponseEntity<PagedResponse<DiscountVm>> getDiscounts(TAccountRequest accountRequest, SearchDiscountRequest request, Pageable pageable);
+    
+    ResponseEntity<ApplyDiscountResponse> applyDiscountToCart(TAccountRequest accountRequest, ApplyDiscountRequest request);
+    ResponseEntity<ApplyDiscountResponse> applyDiscountToOrder(TAccountRequest accountRequest, ApplyDiscountRequest request);
 
-@RestController
-@RequiredArgsConstructor
-@RequestMapping("discounts")
-public class DiscountController {
-  private final DiscountService discountService;
+    // // Shop endpoints
+    // ResponseEntity<Void> updateShopDiscount(TAccountRequest accountRequest, UUID shopId, UpdateDiscountRequest request);
+    // ResponseEntity<Void> updateShopDiscountStatus(TAccountRequest accountRequest, UUID shopId, UpdateDiscountStatusRequest request);
+    // ResponseEntity<Void> assignShopProducts(TAccountRequest accountRequest, UUID shopId, AssignProductsRequest request);
+    // // ResponseEntity<Void> assignBuyers(TAccountRequest accountRequest, UUID shopId, AssignBuyersRequest request);
 
-  // @GetMapping("/")
-  // public ResponseEntity<Discount> getAllDiscountCodeWithProducts(Pageable pageable,
-  //     @RequestBody Discount discount) {
-  //   return ResponseEntity.ok(this.discountService.handleGetAllProductsRelateDiscountCode(discount, pageable));
-  // }
+    // // Customer endpoints
+    // ResponseEntity<PagedResponse<DiscountVm>> getAvailableDiscounts(TAccountRequest accountRequest, Pageable pageable);
+    // ResponseEntity<PagedResponse<DiscountVm>> getAvailableShopDiscounts(TAccountRequest accountRequest, UUID shopId, Pageable pageable);
 
-  // @GetMapping("/shop/{shop-id}")
-  // public ResponseEntity<Discount> getAllDiscountCodesbyShop(Pageable pageable,
-  //     @PathVariable("shop-id") UUID shopId) {
-  //   return ResponseEntity.ok(this.discountService.handleGetAllDiscountCodesByShop(shopId, pageable));
-  // }
-
-  // @PostMapping("/apply")
-  // public ResponseEntity<PriceStatisticsResponse> getAmountApplyDiscountForCart(@RequestBody ApplyDiscountRequest discount) {
-  //   UUID customerId = OptionalExtractor.extractUserId();
-  //   return ResponseEntity.ok().body(
-  //       this.discountService.handleApplyDiscountCodeForCart(customerId, discount, ApplyDiscountStatus.REVIEW));
-  // }
-
-  // @PostMapping("/cancel")
-  // public ResponseEntity<Void> postMethodName(@RequestBody Discount discount) {
-  //   UUID customerId = OptionalExtractor.extractUserId();
-  //   this.discountService.handleCancelDiscountForCart(discount, customerId);
-  //   return ResponseEntity.noContent().build();
-  // }
-
-  // API FOR SHOPOWNER
-
-  // @PostMapping
-  // public ResponseEntity<Discount> createDiscountCode(@RequestBody @Valid Discount discount) {
-  //   UUID shopId = OptionalExtractor.extractUserId();
-  //   return ResponseEntity.status(HttpStatus.CREATED.value())
-  //       .body(this.discountService.handleCreateDiscountCode(discount, shopId));
-  // }
 }

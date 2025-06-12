@@ -1,4 +1,4 @@
-package com.winnguyen1905.promotion.persistance.repository.custom;
+package com.winnguyen1905.promotion.persistance.repository.specification;
 
 import java.util.List;
 import java.util.UUID;

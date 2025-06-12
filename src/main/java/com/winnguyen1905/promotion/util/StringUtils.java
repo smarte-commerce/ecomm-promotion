@@ -1,4 +1,5 @@
 package com.winnguyen1905.promotion.util;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -7,47 +8,47 @@ import java.util.stream.Collectors;
 
 public final class StringUtils {
 
-    public static Boolean isNullOrEmpty(String s) {
-        return s.equals("") || s == null;
-    }
-    public static String convertCamelToSnake(String camelCaseString) {
-        String[] camelCaseStrings = camelCaseString.split(" ");
-        return Arrays.asList(camelCaseStrings).stream().collect(Collectors.joining("_"))
-                .replaceAll("([a-z])([A-Z]+)", "$1_$2")
-                .toLowerCase();
-    }
+  public static Boolean isNullOrEmpty(String s) {
+    return s.equals("") || s == null;
+  }
 
-    public static String convertSnakeToCame(String snakeCaseString) {
-        StringBuilder camelCaseString = new StringBuilder();
+  public static String convertCamelToSnake(String camelCaseString) {
+    String[] camelCaseStrings = camelCaseString.split(" ");
+    return Arrays.asList(camelCaseStrings).stream().collect(Collectors.joining("_"))
+        .replaceAll("([a-z])([A-Z]+)", "$1_$2")
+        .toLowerCase();
+  }
 
-        String[] parts = snakeCaseString.split("_");
+  public static String convertSnakeToCame(String snakeCaseString) {
+    StringBuilder camelCaseString = new StringBuilder();
 
-        for (Integer i = 0; i < parts.length; i++) {
-            String part = parts[i];
-            if (i == 0) {
-                camelCaseString.append(part.toLowerCase());
-            } else {
-                camelCaseString.append(part.substring(0, 1).toUpperCase());
-                camelCaseString.append(part.substring(1).toLowerCase());
-            }
-        }
+    String[] parts = snakeCaseString.split("_");
 
-        return camelCaseString.toString();
+    for (Integer i = 0; i < parts.length; i++) {
+      String part = parts[i];
+      if (i == 0) {
+        camelCaseString.append(part.toLowerCase());
+      } else {
+        camelCaseString.append(part.substring(0, 1).toUpperCase());
+        camelCaseString.append(part.substring(1).toLowerCase());
+      }
     }
 
-    public static String convertSnakeToCamelCase(String snakeCaseString) {
-        StringBuilder camelCaseString = new StringBuilder();
+    return camelCaseString.toString();
+  }
 
-        String[] parts = snakeCaseString.split("_");
+  public static String convertSnakeToCamelCase(String snakeCaseString) {
+    StringBuilder camelCaseString = new StringBuilder();
 
-        for (String part : parts) {
-            if (part.length() > 0) {
-                camelCaseString.append(part.substring(0, 1).toUpperCase());
-                camelCaseString.append(part.substring(1).toLowerCase());
-            }
-        }
+    String[] parts = snakeCaseString.split("_");
 
-        return camelCaseString.toString();
+    for (String part : parts) {
+      if (part.length() > 0) {
+        camelCaseString.append(part.substring(0, 1).toUpperCase());
+        camelCaseString.append(part.substring(1).toLowerCase());
+      }
     }
-    
+
+    return camelCaseString.toString();
+  }
 }

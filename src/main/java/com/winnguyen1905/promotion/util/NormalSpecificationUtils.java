@@ -7,8 +7,8 @@ import java.util.List;
 
 import org.springframework.data.jpa.domain.Specification;
 
-import com.winnguyen1905.promotion.core.model.BaseObject;
-import com.winnguyen1905.promotion.persistance.repository.custom.QuerySpecification; 
+import com.winnguyen1905.promotion.core.model.AbstractModel;
+import com.winnguyen1905.promotion.persistance.repository.specification.QuerySpecification; 
 
 public class NormalSpecificationUtils<D> {
     public static <T, D> List<Specification<D>> toNormalSpec(T tSearchRequest) {
@@ -40,10 +40,10 @@ public class NormalSpecificationUtils<D> {
                 }
             } catch (Exception e) {e.printStackTrace();}
         });
-        if(tSearchRequest instanceof BaseObject abstractDTO) {
-            if(abstractDTO.getCreatedBy() != null) specList.add(QuerySpecification.isEqualValue(abstractDTO.getCreatedBy(), "createdBy", null));
-            if(abstractDTO.getUpdatedBy() != null) specList.add(QuerySpecification.isEqualValue(abstractDTO.getUpdatedBy(), "updateBy", null));
-        }
+        // if(tSearchRequest instanceof AbstractModel abstractModel) {
+        //     if(abstractDTO.getCreatedBy() != null) specList.add(QuerySpecification.isEqualValue(abstractDTO.getCreatedBy(), "createdBy", null));
+        //     if(abstractDTO.getUpdatedBy() != null) specList.add(QuerySpecification.isEqualValue(abstractDTO.getUpdatedBy(), "updateBy", null));
+        // }
         return specList;
     }
 }

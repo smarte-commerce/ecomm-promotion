@@ -24,10 +24,10 @@ public class SoftDeleteRepositoryImpl<T extends EBase, ID> implements SoftDelete
   @Override
   @Modifying
   public void softDeleteOne(T entity) {
-    if (entity != null) {
-      entity.setIsDeleted(true);
-      entityManager.merge(entity);
-    }
+    // if (entity != null) {
+    // entity.setIsDeleted(true);
+    // entityManager.merge(entity);
+    // }
   }
 
   @Override
