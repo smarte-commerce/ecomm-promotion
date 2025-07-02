@@ -21,4 +21,6 @@ public interface DiscountRepository extends JpaRepository<EDiscount, UUID>, JpaS
   Optional<EDiscount> findByIdAndIsActiveTrue(UUID id);
 
   Page<EDiscount> findAllByShopIdAndIsActiveTrue(UUID shopId, Pageable pageable);
+
+  long countByIdIn(List<UUID> ids);
 }
