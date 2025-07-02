@@ -5,8 +5,6 @@ import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
 
-import com.winnguyen1905.promotion.common.DiscountUsageStatus;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -26,21 +24,20 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-@NoArgsConstructor
-@AllArgsConstructor
 @Getter
 @Setter
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
 @SuperBuilder
 @Table(name = "customer_promotion_usage", schema = "public")
-public class EDiscountUsage {
+public class ECustomerPromotionUsage {
     
     @Version
     private long version;
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
     @Column(name = "customer_id", nullable = false)
@@ -49,10 +46,6 @@ public class EDiscountUsage {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "program_id", nullable = false)
     private EPromotionProgram program;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "discount_id", nullable = false)
-    private EDiscount discount;
 
     @Column(name = "order_id")
     private UUID orderId;
@@ -75,15 +68,10 @@ public class EDiscountUsage {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private DiscountUsageStatus usageStatus = DiscountUsageStatus.SUCCESS;
-
-    // Legacy field for backward compatibility - will be removed later
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_discount_id")
-    private EUserDiscount userDiscount;
+    private Status status = Status.SUCCESS;
 
     @PrePersist
-    public void prePersist() {
+    protected void prePersist() {
         if (this.id == null) {
             this.id = UUID.randomUUID();
         }
@@ -96,8 +84,12 @@ public class EDiscountUsage {
         if (this.pointsEarned == null) {
             this.pointsEarned = 0;
         }
-        if (this.usageStatus == null) {
-            this.usageStatus = DiscountUsageStatus.SUCCESS;
+        if (this.status == null) {
+            this.status = Status.SUCCESS;
         }
     }
-}
+
+    public enum Status {
+        SUCCESS, FAILED, PENDING, CANCELLED
+    }
+} 
