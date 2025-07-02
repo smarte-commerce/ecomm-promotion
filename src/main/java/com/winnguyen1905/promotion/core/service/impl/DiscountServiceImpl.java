@@ -1,4 +1,4 @@
-package com.winnguyen1905.promotion.core.service;
+package com.winnguyen1905.promotion.core.service.impl;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -52,6 +52,9 @@ import com.winnguyen1905.promotion.persistance.repository.ProductDiscountReposit
 import com.winnguyen1905.promotion.persistance.repository.UserDiscountRepository;
 import com.winnguyen1905.promotion.persistance.repository.specification.DiscountSpecification;
 import com.winnguyen1905.promotion.secure.TAccountRequest;
+import com.winnguyen1905.promotion.core.service.DiscountService;
+import com.winnguyen1905.promotion.core.service.DistributedLockService;
+import com.winnguyen1905.promotion.core.service.OptimisticLockingService;
 import com.winnguyen1905.promotion.core.service.OptimisticLockingService.OptimisticLockingException;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -344,7 +347,7 @@ public class DiscountServiceImpl implements DiscountService {
         originalRequest.globallyDiscountVersion());
 
     // Step 3: Finally apply shipping discount with optimistic locking
-    CustomerCartWithShop cartAfterGlobalDiscount = updateCartWithDiscount(currentCart, globalPriceStats);
+    CustomerCartWithShop cartAfterGlobalDiscount = updateCartWithDiscount(cartAfterShopDiscount, globalPriceStats);
     return applyDiscountWithLocking(
         customerId,
         originalRequest.shopId(),

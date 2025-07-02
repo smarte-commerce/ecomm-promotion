@@ -7,8 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 
-import com.winnguyen1905.promotion.core.model.request.*;
-import com.winnguyen1905.promotion.core.model.response.*;
+import com.winnguyen1905.promotion.model.request.*;
+import com.winnguyen1905.promotion.model.response.*;
 import com.winnguyen1905.promotion.secure.TAccountRequest;
 
 public interface DiscountController {
