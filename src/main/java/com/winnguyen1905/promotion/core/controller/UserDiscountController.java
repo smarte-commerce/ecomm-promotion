@@ -15,20 +15,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.winnguyen1905.promotion.core.model.request.AddDiscountRequest;
-import com.winnguyen1905.promotion.core.model.request.ApplyDiscountRequest;
-import com.winnguyen1905.promotion.core.model.request.AssignCategoriesRequest;
-import com.winnguyen1905.promotion.core.model.request.AssignProductsRequest;
-import com.winnguyen1905.promotion.core.model.request.CheckoutRequest;
-import com.winnguyen1905.promotion.core.model.request.SearchDiscountRequest;
-import com.winnguyen1905.promotion.core.model.request.UpdateDiscountRequest;
-import com.winnguyen1905.promotion.core.model.request.UpdateDiscountStatusRequest;
-import com.winnguyen1905.promotion.core.model.response.ApplyDiscountResponse;
-import com.winnguyen1905.promotion.core.model.response.DiscountValidityResponse;
-import com.winnguyen1905.promotion.core.model.response.DiscountVm;
-import com.winnguyen1905.promotion.core.model.response.PagedResponse;
-import com.winnguyen1905.promotion.core.model.response.PriceStatisticsResponse;
 import com.winnguyen1905.promotion.core.service.DiscountService;
+import com.winnguyen1905.promotion.model.request.AddDiscountRequest;
+import com.winnguyen1905.promotion.model.request.ApplyDiscountRequest;
+import com.winnguyen1905.promotion.model.request.AssignCategoriesRequest;
+import com.winnguyen1905.promotion.model.request.AssignProductsRequest;
+import com.winnguyen1905.promotion.model.request.CheckoutRequest;
+import com.winnguyen1905.promotion.model.request.SearchDiscountRequest;
+import com.winnguyen1905.promotion.model.request.UpdateDiscountStatusRequest;
+import com.winnguyen1905.promotion.model.response.ApplyDiscountResponse;
+import com.winnguyen1905.promotion.model.response.DiscountValidityResponse;
+import com.winnguyen1905.promotion.model.response.DiscountVm;
+import com.winnguyen1905.promotion.model.response.PagedResponse;
+import com.winnguyen1905.promotion.model.response.PriceStatisticsResponse;
 import com.winnguyen1905.promotion.secure.AccountRequest;
 import com.winnguyen1905.promotion.secure.ResponseMessage;
 import com.winnguyen1905.promotion.secure.TAccountRequest;
@@ -124,16 +123,15 @@ public class UserDiscountController implements DiscountController {
     return ResponseEntity.ok(discountService.getDiscounts(accountRequest, request, pageable));
   }
 
+  @PostMapping("/apply-discount-shop")
+  public PriceStatisticsResponse postMethodName(@AccountRequest TAccountRequest accountRequest, @RequestBody CheckoutRequest request) {
+    return discountService.applyDiscountToShop(accountRequest, request);
+  }
   @Override
   @PostMapping("/apply-to-cart")
   public ResponseEntity<ApplyDiscountResponse> applyDiscountToCart(@AccountRequest TAccountRequest accountRequest,
       @RequestBody ApplyDiscountRequest request) {
     return ResponseEntity.ok(discountService.applyDiscountToCart(accountRequest, request));
-  }
-
-  @PostMapping("/apply-discount-shop")
-  public PriceStatisticsResponse postMethodName(@AccountRequest TAccountRequest accountRequest, @RequestBody CheckoutRequest request) {
-    return discountService.applyDiscountToShop(accountRequest, request);
   }
 
   @Override

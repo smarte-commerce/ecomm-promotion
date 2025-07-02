@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
 
-import com.winnguyen1905.promotion.core.model.request.CustomerCart;
+import com.winnguyen1905.promotion.model.request.CustomerCart;
 
 @Service
 @FeignClient(name = "CART-SERVICE", url = "http://localhost:8090")
