@@ -73,6 +73,18 @@ spring:
       #     - classpath:sql/init.sql
       mode: always
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 60000 # milliseconds
+      lettuce:
+        pool:
+          max-active: 8 # maximum number of connections that can be allocated by the pool at a given time
+          max-idle: 8   # maximum number of idle connections in the pool
+          min-idle: 0   # minimum number of idle connections in the pool
+          max-wait: 1s  # maximum amount of time a connection allocation should block before throwing an exception
+
 logging:
   level:
     org:

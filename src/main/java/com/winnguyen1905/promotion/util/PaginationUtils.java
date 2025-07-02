@@ -6,7 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
-import com.winnguyen1905.promotion.core.model.response.PagedResponse;
+import com.winnguyen1905.promotion.model.response.PagedResponse;
 
 public class PaginationUtils {
 
