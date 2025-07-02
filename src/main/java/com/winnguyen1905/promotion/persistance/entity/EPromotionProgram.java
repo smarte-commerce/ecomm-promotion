@@ -1,7 +1,6 @@
 package com.winnguyen1905.promotion.persistance.entity;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -19,15 +18,17 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.Builder.Default;
 import lombok.experimental.SuperBuilder;
 
 @Getter
@@ -38,67 +39,156 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @Table(name = "promotion_programs", schema = "public")
 public class EPromotionProgram {
-  @Version
-  private long version;
+    @Version
+    private long version;
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.UUID)
-  private UUID id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
-  @Column(name = "name", nullable = false)
-  private String name;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "campaign_id")
+    private ECampaign campaign;
 
-  @Column(name = "description", columnDefinition = "TEXT")
-  private String description;
+    @Column(name = "name", nullable = false)
+    private String name;
 
-  @Column(name = "start_date", nullable = false)
-  private LocalDateTime startDate;
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
 
-  @Column(name = "end_date", nullable = false)
-  private LocalDateTime endDate;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "program_type", nullable = false)
+    private ProgramType programType;
 
-  @Column(name = "platform_commission_rate", nullable = false)
-  private Double platformCommissionRate;
+    @Column(name = "start_date", nullable = false)
+    private Instant startDate;
 
-  @Column(name = "required_discount", nullable = false)
-  private Double requiredDiscount;
+    @Column(name = "end_date", nullable = false)
+    private Instant endDate;
 
-  @Enumerated(EnumType.STRING)
-  @Column(name = "visibility", nullable = false)
-  private Visibility visibility;
+    @Column(name = "priority")
+    private Integer priority = 1;
 
-  @Column(name = "terms_url")
-  private String termsUrl;
+    @Column(name = "is_stackable")
+    private Boolean isStackable = false;
 
-  @JsonIgnore
-  @Column(name = "created_by", nullable = true)
-  private String createdBy;
+    @Column(name = "platform_commission_rate")
+    private Double platformCommissionRate = 0.0;
 
-  @JsonIgnore
-  @Column(name = "updated_by", nullable = true)
-  private String updatedBy;
+    @Column(name = "required_vendor_contribution")
+    private Double requiredVendorContribution = 0.0;
 
-  @CreationTimestamp
-  @Column(name = "created_date", updatable = false)
-  private Instant createdDate;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "visibility", nullable = false)
+    private Visibility visibility = Visibility.PUBLIC;
 
-  @UpdateTimestamp
-  @Column(name = "updated_date", updatable = true)
-  private Instant updatedDate;
+    @Column(name = "usage_limit_global")
+    private Integer usageLimitGlobal;
 
-  @Default
-  @OneToMany(mappedBy = "program", fetch = FetchType.LAZY)
-  private List<ECommissionPayout> commissionPayouts = new ArrayList<>();
+    @Column(name = "usage_count_global")
+    private Integer usageCountGlobal = 0;
 
-  @Default
-  @OneToMany(mappedBy = "program", fetch = FetchType.LAZY)
-  private List<EShopPromotionParticipation> shopPromotionParticipations = new ArrayList<>();
+    @Column(name = "terms_conditions", columnDefinition = "TEXT")
+    private String termsConditions;
 
-  @Default
-  @OneToMany(mappedBy = "program", fetch = FetchType.LAZY)
-  private List<EDiscount> discounts = new ArrayList<>();
+    @Column(name = "terms_url")
+    private String termsUrl;
 
-  public enum Visibility {
-    PUBLIC, INVITE_ONLY
-  }
+    @Column(name = "auto_apply")
+    private Boolean autoApply = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private ProgramStatus status = ProgramStatus.DRAFT;
+
+    @Column(name = "created_by", nullable = false)
+    private UUID createdBy;
+
+    @Column(name = "updated_by")
+    private UUID updatedBy;
+
+    @JsonIgnore
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private Instant createdAt;
+
+    @JsonIgnore
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private Instant updatedAt;
+
+    @Default
+    @OneToMany(mappedBy = "program", fetch = FetchType.LAZY)
+    private List<EPromotionRule> promotionRules = new ArrayList<>();
+
+    @Default
+    @OneToMany(mappedBy = "program", fetch = FetchType.LAZY)
+    private List<EPromotionAction> promotionActions = new ArrayList<>();
+
+    @Default
+    @OneToMany(mappedBy = "program", fetch = FetchType.LAZY)
+    private List<EVendorPromotionParticipation> vendorParticipations = new ArrayList<>();
+
+    @Default
+    @OneToMany(mappedBy = "program", fetch = FetchType.LAZY)
+    private List<EPromotionProduct> promotionProducts = new ArrayList<>();
+
+    @Default
+    @OneToMany(mappedBy = "program", fetch = FetchType.LAZY)
+    private List<ECustomerPromotionUsage> customerUsages = new ArrayList<>();
+
+    @Default
+    @OneToMany(mappedBy = "program", fetch = FetchType.LAZY)
+    private List<EPromotionCommission> promotionCommissions = new ArrayList<>();
+
+    @Default
+    @OneToMany(mappedBy = "program", fetch = FetchType.LAZY)
+    private List<EPromotionAnalytics> promotionAnalytics = new ArrayList<>();
+
+    @Default
+    @OneToMany(mappedBy = "program", fetch = FetchType.LAZY)
+    private List<EDiscount> discounts = new ArrayList<>();
+
+    @PrePersist
+    protected void prePersist() {
+        if (this.id == null) {
+            this.id = UUID.randomUUID();
+        }
+        if (this.priority == null) {
+            this.priority = 1;
+        }
+        if (this.isStackable == null) {
+            this.isStackable = false;
+        }
+        if (this.platformCommissionRate == null) {
+            this.platformCommissionRate = 0.0;
+        }
+        if (this.requiredVendorContribution == null) {
+            this.requiredVendorContribution = 0.0;
+        }
+        if (this.visibility == null) {
+            this.visibility = Visibility.PUBLIC;
+        }
+        if (this.usageCountGlobal == null) {
+            this.usageCountGlobal = 0;
+        }
+        if (this.autoApply == null) {
+            this.autoApply = false;
+        }
+        if (this.status == null) {
+            this.status = ProgramStatus.DRAFT;
+        }
+    }
+
+    public enum ProgramType {
+        DISCOUNT, CASHBACK, POINTS, GIFT, SHIPPING, BUNDLE
+    }
+
+    public enum Visibility {
+        PUBLIC, INVITE_ONLY, MEMBER_ONLY, VIP_ONLY
+    }
+
+    public enum ProgramStatus {
+        DRAFT, ACTIVE, PAUSED, EXPIRED, CANCELLED
+    }
 }
