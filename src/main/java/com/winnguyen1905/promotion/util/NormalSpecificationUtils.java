@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.domain.Specification;
 
-import com.winnguyen1905.promotion.core.model.AbstractModel;
+import com.winnguyen1905.promotion.model.AbstractModel;
 import com.winnguyen1905.promotion.persistance.repository.specification.QuerySpecification; 
 
 public class NormalSpecificationUtils<D> {

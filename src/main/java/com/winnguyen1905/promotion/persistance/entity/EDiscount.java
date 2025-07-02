@@ -174,45 +174,5 @@ public class EDiscount {
     public enum CreatorType {
         ADMIN, VENDOR, SYSTEM
     }
-
-    // Legacy getters for backward compatibility
-    @Deprecated
-    public Double getMaxReducedValue() {
-        return maxDiscountAmount;
-    }
-
-    @Deprecated
-    public void setMaxReducedValue(Double maxReducedValue) {
-        this.maxDiscountAmount = maxReducedValue;
-    }
-
-    @Deprecated
-    public int getUsageLimit() {
-        return usageLimitTotal != null ? usageLimitTotal : 0;
-    }
-
-    @Deprecated
-    public void setUsageLimit(int usageLimit) {
-        this.usageLimitTotal = usageLimit;
-    }
-
-    @Deprecated
-    public int getLimitUsagePerCutomer() {
-        return usageLimitPerCustomer != null ? usageLimitPerCustomer : 1;
-    }
-
-    @Deprecated
-    public void setLimitUsagePerCutomer(int limitUsagePerCustomer) {
-        this.usageLimitPerCustomer = limitUsagePerCustomer;
-    }
-
-    @Deprecated
-    public UUID getShopId() {
-        return vendorId;
-    }
-
-    @Deprecated
-    public void setShopId(UUID shopId) {
-        this.vendorId = shopId;
-    }
 }
+

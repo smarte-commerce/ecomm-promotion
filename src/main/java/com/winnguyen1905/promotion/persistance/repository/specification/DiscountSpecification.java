@@ -3,7 +3,7 @@ package com.winnguyen1905.promotion.persistance.repository.specification;
 import com.winnguyen1905.promotion.persistance.entity.EDiscount;
 import com.winnguyen1905.promotion.persistance.entity.EProductDiscount;
 import com.winnguyen1905.promotion.common.DiscountType;
-import com.winnguyen1905.promotion.core.model.request.SearchDiscountRequest;
+import com.winnguyen1905.promotion.model.request.SearchDiscountRequest;
 
 import jakarta.persistence.criteria.*;
 import org.springframework.data.jpa.domain.Specification;

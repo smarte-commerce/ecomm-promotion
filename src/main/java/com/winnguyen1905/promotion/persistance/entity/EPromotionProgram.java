@@ -135,7 +135,7 @@ public class EPromotionProgram {
 
     @Default
     @OneToMany(mappedBy = "program", fetch = FetchType.LAZY)
-    private List<ECustomerPromotionUsage> customerUsages = new ArrayList<>();
+    private List<EDiscountUsage> discountUsages = new ArrayList<>();
 
     @Default
     @OneToMany(mappedBy = "program", fetch = FetchType.LAZY)
