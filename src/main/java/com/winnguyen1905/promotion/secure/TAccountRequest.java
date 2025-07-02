@@ -2,7 +2,7 @@ package com.winnguyen1905.promotion.secure;
 
 import java.util.UUID;
 
-import com.winnguyen1905.promotion.core.model.AbstractModel;
+import com.winnguyen1905.promotion.model.AbstractModel;
 
 import lombok.Builder;
 
