@@ -127,10 +127,10 @@ public class DiscountServiceImpl implements DiscountService {
         // discount.getId()).isEmpty())
         // throw new ResourceNotFoundException("Discount is not for this shop");
       }
-      case SHOP -> {
-        if (!discount.getShopId().equals(shopId))
+      case VENDOR -> {
+        if (!discount.getVendorId().equals(shopId))
           throw new ResourceNotFoundException("Discount is not for this shop");
-        if (!discount.getCreatorType().equals(EDiscount.CreatorType.SHOP))
+        if (!discount.getCreatorType().equals(EDiscount.CreatorType.VENDOR))
           throw new ResourceNotFoundException("Discount is not for this shop");
       }
       default -> throw new ResourceNotFoundException("Invalid discount scope");
@@ -219,13 +219,13 @@ public class DiscountServiceImpl implements DiscountService {
   private OrderDiscounts getValidatedDiscounts(UUID customerId, ApplyDiscountRequest request) {
     // Get and validate shop discount
     EDiscount shopDiscount = findAndValidateDiscount(customerId, request.shopDiscountId());
-    validateDiscountScope(shopDiscount, CreatorType.SHOP, "Shop discount must have SHOP scope");
+    validateDiscountScope(shopDiscount, EDiscount.CreatorType.VENDOR, "Shop discount must have VENDOR scope");
     validateDiscountCategory(shopDiscount, DiscountCategory.PRODUCT, "Shop discount must be PRODUCT category");
     validateDiscountEligibility(customerId, shopDiscount);
 
     // Get and validate shipping discount
     EDiscount shippingDiscount = findAndValidateDiscount(customerId, request.shippingDiscountId());
-    validateDiscountScope(shippingDiscount, CreatorType.SHOP, "Shipping discount must have SHOP scope");
+    validateDiscountScope(shippingDiscount, EDiscount.CreatorType.VENDOR, "Shipping discount must have VENDOR scope");
     validateDiscountCategory(shippingDiscount, DiscountCategory.SHIPPING,
         "Shipping discount must be SHIPPING category");
     validateDiscountEligibility(customerId, shippingDiscount);
@@ -332,12 +332,12 @@ public class DiscountServiceImpl implements DiscountService {
   }
 
   private void validateUsageLimits(UUID customerId, EDiscount discount) {
-    if (discount.getUsageCount() >= discount.getUsageLimit()) {
+    if (discount.getUsageLimitTotal() != null && discount.getUsageCount() >= discount.getUsageLimitTotal()) {
       throw new ResourceNotFoundException("Discount has reached its global usage limit");
     }
 
-    int customerUsageCount = discountUsageRepository.countByDiscountIdAndCustomerId(customerId, discount.getId());
-    if (customerUsageCount >= discount.getLimitUsagePerCutomer()) {
+    int customerUsageCount = discountUsageRepository.countByDiscountIdAndCustomerId(discount.getId(), customerId);
+    if (discount.getUsageLimitPerCustomer() != null && customerUsageCount >= discount.getUsageLimitPerCustomer()) {
       throw new ResourceNotFoundException(
           String.format("Customer %s has reached their usage limit for this discount", customerId));
     }
@@ -401,24 +401,25 @@ public class DiscountServiceImpl implements DiscountService {
 
   private EDiscount buildDiscount(UUID userId, AddDiscountRequest request) {
     return EDiscount.builder()
-        .creatorType(request.creatorType() == EDiscount.CreatorType.SHOP ? CreatorType.SHOP : CreatorType.ADMIN)
+        .creatorType(request.creatorType() == EDiscount.CreatorType.VENDOR ? 
+            EDiscount.CreatorType.VENDOR : EDiscount.CreatorType.ADMIN)
+        .creatorId(userId)
         .discountType(request.discountType())
         .appliesTo(request.appliesTo())
         .discountCategory(request.discountCategory())
         .name(request.name())
         .description(request.description())
         .value(request.value())
-        .maxReducedValue(request.maxReducedValue())
+        .maxDiscountAmount(request.maxReducedValue())
         .code(request.code().toUpperCase())
         .startDate(request.startDate())
         .endDate(request.endDate())
-        .usageLimit(request.usageLimit())
+        .usageLimitTotal(request.usageLimit())
         .usageCount(0)
-        .limitUsagePerCutomer(request.limitUsagePerCutomer())
+        .usageLimitPerCustomer(request.limitUsagePerCutomer())
         .minOrderValue(request.minOrderValue())
         .isActive(true)
-        // .categoryNames(request.categories())
-        .shopId(request.creatorType() == EDiscount.CreatorType.SHOP ? userId : null)
+        .vendorId(request.creatorType() == EDiscount.CreatorType.VENDOR ? userId : null)
         .build();
   }
 
