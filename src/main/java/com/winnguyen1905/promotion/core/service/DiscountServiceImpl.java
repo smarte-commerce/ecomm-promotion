@@ -22,24 +22,24 @@ import com.winnguyen1905.promotion.common.DiscountCategory;
 import com.winnguyen1905.promotion.common.DiscountType;
 import com.winnguyen1905.promotion.common.DiscountUsageStatus;
 import com.winnguyen1905.promotion.core.feign.CartServiceClient;
-import com.winnguyen1905.promotion.core.model.AbstractModel;
-import com.winnguyen1905.promotion.core.model.request.AddDiscountRequest;
-import com.winnguyen1905.promotion.core.model.request.ApplyDiscountRequest;
-import com.winnguyen1905.promotion.core.model.request.AssignCategoriesRequest;
-import com.winnguyen1905.promotion.core.model.request.AssignProductsRequest;
-import com.winnguyen1905.promotion.core.model.request.CheckoutRequest;
-import com.winnguyen1905.promotion.core.model.request.CustomerCart;
-import com.winnguyen1905.promotion.core.model.request.SearchDiscountRequest;
-import com.winnguyen1905.promotion.core.model.request.UpdateDiscountRequest;
-import com.winnguyen1905.promotion.core.model.request.UpdateDiscountStatusRequest;
-import com.winnguyen1905.promotion.core.model.request.CustomerCart.CustomerCartWithShop;
-import com.winnguyen1905.promotion.core.model.response.ApplyDiscountResponse;
-import com.winnguyen1905.promotion.core.model.response.DiscountValidityResponse;
-import com.winnguyen1905.promotion.core.model.response.DiscountVm;
-import com.winnguyen1905.promotion.core.model.response.PagedResponse;
-import com.winnguyen1905.promotion.core.model.response.PriceStatisticsResponse;
 import com.winnguyen1905.promotion.exception.BadRequestException;
 import com.winnguyen1905.promotion.exception.ResourceNotFoundException;
+import com.winnguyen1905.promotion.model.AbstractModel;
+import com.winnguyen1905.promotion.model.request.AddDiscountRequest;
+import com.winnguyen1905.promotion.model.request.ApplyDiscountRequest;
+import com.winnguyen1905.promotion.model.request.AssignCategoriesRequest;
+import com.winnguyen1905.promotion.model.request.AssignProductsRequest;
+import com.winnguyen1905.promotion.model.request.CheckoutRequest;
+import com.winnguyen1905.promotion.model.request.CustomerCart;
+import com.winnguyen1905.promotion.model.request.SearchDiscountRequest;
+import com.winnguyen1905.promotion.model.request.UpdateDiscountRequest;
+import com.winnguyen1905.promotion.model.request.UpdateDiscountStatusRequest;
+import com.winnguyen1905.promotion.model.request.CustomerCart.CustomerCartWithShop;
+import com.winnguyen1905.promotion.model.response.ApplyDiscountResponse;
+import com.winnguyen1905.promotion.model.response.DiscountValidityResponse;
+import com.winnguyen1905.promotion.model.response.DiscountVm;
+import com.winnguyen1905.promotion.model.response.PagedResponse;
+import com.winnguyen1905.promotion.model.response.PriceStatisticsResponse;
 import com.winnguyen1905.promotion.persistance.entity.EDiscount;
 import com.winnguyen1905.promotion.persistance.entity.EProductDiscount;
 import com.winnguyen1905.promotion.persistance.entity.EDiscount.CreatorType;
@@ -48,10 +48,11 @@ import com.winnguyen1905.promotion.persistance.entity.EUserDiscount;
 import com.winnguyen1905.promotion.persistance.repository.DiscountRepository;
 import com.winnguyen1905.promotion.persistance.repository.DiscountUsageRepository;
 import com.winnguyen1905.promotion.persistance.repository.ProductDiscountRepository;
-import com.winnguyen1905.promotion.persistance.repository.ShopPromotionRepository;
+
 import com.winnguyen1905.promotion.persistance.repository.UserDiscountRepository;
 import com.winnguyen1905.promotion.persistance.repository.specification.DiscountSpecification;
 import com.winnguyen1905.promotion.secure.TAccountRequest;
+import com.winnguyen1905.promotion.core.service.OptimisticLockingService.OptimisticLockingException;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +60,10 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class DiscountServiceImpl implements DiscountService {
+
+  // Optimistic locking services
+  private final OptimisticLockingService optimisticLockingService;
+  private final DistributedLockService distributedLockService;
 
   protected record OrderDiscounts(
       EDiscount shopDiscount,
@@ -104,7 +109,28 @@ public class DiscountServiceImpl implements DiscountService {
 
   protected PriceStatisticsResponse calculatePriceAfterApplyDiscountForOrder(EDiscount discount,
       ApplyDiscountRequest applyDiscountRequest) {
-    return null;
+    CustomerCartWithShop cart = validateAndGetCart(applyDiscountRequest, discount);
+    validateDiscountUsableShopCondition(discount, applyDiscountRequest.shopId());
+
+    double promotionalTotal = calculateAndValidatePromotionalTotal(discount, cart);
+    double amountReduced = calculateDiscountAmount(discount, promotionalTotal);
+
+    double amountShipReduced = 0.0;
+    double amountProductReduced = 0.0;
+
+    if (discount.getDiscountCategory().equals(DiscountCategory.SHIPPING)) {
+      amountShipReduced = amountReduced;
+    } else { // Handles PRODUCT and other categories if any
+      amountProductReduced = amountReduced;
+    }
+
+    return PriceStatisticsResponse.builder()
+        .totalProductPrice(cart.priceStatistic().totalProductPrice())
+        .totalShipFee(cart.priceStatistic().totalShipFee())
+        .amountProductReduced(amountProductReduced)
+        .amountShipReduced(amountShipReduced)
+        .finalPrice(cart.priceStatistic().finalPrice() - amountProductReduced - amountShipReduced)
+        .build();
   }
 
   private double calculateAmoundProductReduced(EDiscount discount, double promotionalTotal) {
@@ -153,9 +179,19 @@ public class DiscountServiceImpl implements DiscountService {
   }
 
   private double calculateDiscountAmount(EDiscount discount, double baseAmount) {
-    return discount.getDiscountType().equals(DiscountType.PERCENTAGE)
-        ? baseAmount * discount.getValue() / 100
-        : discount.getValue();
+    double discountValue = discount.getValue();
+    double discountAmount;
+
+    if (discount.getDiscountType() == DiscountType.PERCENTAGE) {
+      discountAmount = (baseAmount * discountValue) / 100;
+
+      if (discount.getMaxDiscountAmount() != null && discount.getMaxDiscountAmount() > 0) {
+        discountAmount = Math.min(discountAmount, discount.getMaxDiscountAmount());
+      }
+    } else {
+      discountAmount = Math.min(discountValue, baseAmount);
+    }
+    return discountAmount;
   }
 
   private double calculateSpecificProductsDiscount(EDiscount discount, CustomerCartWithShop cartWithShop) {
@@ -184,7 +220,7 @@ public class DiscountServiceImpl implements DiscountService {
         .isValid(true)
         .code(discount.getCode())
         .minOrderValue(discount.getMinOrderValue())
-        .maxReducedValue(discount.getMaxReducedValue())
+        .maxReducedValue(discount.getMaxDiscountAmount())
         .expiryDate(discount.getEndDate())
         .build();
   }
@@ -195,7 +231,7 @@ public class DiscountServiceImpl implements DiscountService {
     EDiscount discount = findAndValidateDiscount(accountRequest.id(), request.discountId());
 
     return ApplyDiscountResponse.builder()
-        .shopId(discount.getShopId())
+        .shopId(discount.getVendorId())
         .discountId(discount.getId())
         .priceStatisticsResponse(this.calculatePriceAfterApplyDiscountForCart(discount, request))
         .build();
@@ -204,16 +240,46 @@ public class DiscountServiceImpl implements DiscountService {
   @Override
   public ApplyDiscountResponse applyDiscountToOrder(TAccountRequest accountRequest, ApplyDiscountRequest request) {
     UUID customerId = accountRequest.id();
-    // Get and validate all discount types
-    var discounts = getValidatedDiscounts(customerId, request);
 
-    // Apply discounts sequentially
-    PriceStatisticsResponse finalPriceStats = applyDiscountsInOrder(customerId, request, discounts);
+    // Apply discounts with optimistic locking for each discount type
+    PriceStatisticsResponse finalPriceStats = applyDiscountsWithOptimisticLocking(customerId, request);
 
     return ApplyDiscountResponse.builder()
         .shopId(request.shopId())
         .discountId(request.discountId())
         .priceStatisticsResponse(finalPriceStats).build();
+  }
+
+  /**
+   * Applies multiple discounts with optimistic locking for each discount.
+   */
+  private PriceStatisticsResponse applyDiscountsWithOptimisticLocking(UUID customerId, ApplyDiscountRequest request) {
+    // Validate version information if provided
+    validateDiscountVersions(request);
+
+    // Get and validate all discount types
+    var discounts = getValidatedDiscounts(customerId, request);
+
+    // Apply discounts sequentially with optimistic locking
+    return applyDiscountsInOrderWithLocking(customerId, request, discounts);
+  }
+
+  /**
+   * Validates discount versions for optimistic locking if provided in the request.
+   */
+  private void validateDiscountVersions(ApplyDiscountRequest request) {
+    if (request.discountVersion() != null && request.discountId() != null) {
+      optimisticLockingService.validateVersion(request.discountId(), request.discountVersion());
+    }
+    if (request.shopDiscountVersion() != null && request.shopDiscountId() != null) {
+      optimisticLockingService.validateVersion(request.shopDiscountId(), request.shopDiscountVersion());
+    }
+    if (request.shippingDiscountVersion() != null && request.shippingDiscountId() != null) {
+      optimisticLockingService.validateVersion(request.shippingDiscountId(), request.shippingDiscountVersion());
+    }
+    if (request.globallyDiscountVersion() != null && request.globallyDiscountId() != null) {
+      optimisticLockingService.validateVersion(request.globallyDiscountId(), request.globallyDiscountVersion());
+    }
   }
 
   private OrderDiscounts getValidatedDiscounts(UUID customerId, ApplyDiscountRequest request) {
@@ -251,6 +317,42 @@ public class DiscountServiceImpl implements DiscountService {
     }
   }
 
+  /**
+   * Applies discounts in order with optimistic locking for each discount.
+   */
+  private PriceStatisticsResponse applyDiscountsInOrderWithLocking(
+      UUID customerId,
+      ApplyDiscountRequest originalRequest,
+      OrderDiscounts discounts) {
+    CustomerCartWithShop currentCart = originalRequest.customerCartWithShop();
+
+    // Step 1: Apply shop discount first with optimistic locking
+    PriceStatisticsResponse shopPriceStats = applyDiscountWithLocking(
+        customerId,
+        originalRequest.shopId(),
+        discounts.shopDiscount(),
+        currentCart,
+        originalRequest.shopDiscountVersion());
+
+    // Step 2: Apply global discount with optimistic locking
+    CustomerCartWithShop cartAfterShopDiscount = updateCartWithDiscount(currentCart, shopPriceStats);
+    PriceStatisticsResponse globalPriceStats = applyDiscountWithLocking(
+        customerId,
+        originalRequest.shopId(),
+        discounts.globalDiscount(),
+        cartAfterShopDiscount,
+        originalRequest.globallyDiscountVersion());
+
+    // Step 3: Finally apply shipping discount with optimistic locking
+    CustomerCartWithShop cartAfterGlobalDiscount = updateCartWithDiscount(currentCart, globalPriceStats);
+    return applyDiscountWithLocking(
+        customerId,
+        originalRequest.shopId(),
+        discounts.shippingDiscount(),
+        cartAfterGlobalDiscount,
+        originalRequest.shippingDiscountVersion());
+  }
+
   private PriceStatisticsResponse applyDiscountsInOrder(
       UUID customerId,
       ApplyDiscountRequest originalRequest,
@@ -281,6 +383,49 @@ public class DiscountServiceImpl implements DiscountService {
         cartAfterGlobalDiscount);
   }
 
+  /**
+   * Applies a single discount with optimistic locking.
+   */
+  private PriceStatisticsResponse applyDiscountWithLocking(
+      UUID customerId,
+      UUID shopId,
+      EDiscount discount,
+      CustomerCartWithShop cart,
+      Long expectedVersion) {
+
+    return optimisticLockingService.executeWithOptimisticLocking(discount.getId(), lockedDiscount -> {
+      if (expectedVersion != null && !expectedVersion.equals(lockedDiscount.getVersion())) {
+        throw new OptimisticLockingService.OptimisticLockingException(
+            String.format("Version mismatch for discount %s. Expected: %d, Actual: %d",
+                lockedDiscount.getId(), expectedVersion, lockedDiscount.getVersion()));
+      }
+
+      validateDiscountEligibility(customerId, lockedDiscount);
+      validateUsageLimitsForApplication(customerId, lockedDiscount);
+
+      ApplyDiscountRequest request = ApplyDiscountRequest.builder()
+          .shopId(shopId)
+          .customerId(customerId)
+          .discountId(lockedDiscount.getId())
+          .customerCartWithShop(cart)
+          .build();
+
+      PriceStatisticsResponse priceStats = calculatePriceAfterApplyDiscountForOrder(lockedDiscount, request);
+
+      lockedDiscount.setUsageCount(lockedDiscount.getUsageCount() + 1);
+      discountRepository.save(lockedDiscount);
+
+      double totalOriginalPrice = priceStats.totalProductPrice() + priceStats.totalShipFee();
+      double discountAmount = totalOriginalPrice - priceStats.finalPrice();
+
+      EDiscountUsage discountUsage = createDiscountUsageRecord(lockedDiscount, customerId, UUID.randomUUID(),
+          discountAmount);
+      discountUsageRepository.save(discountUsage);
+
+      return priceStats;
+    });
+  }
+
   private PriceStatisticsResponse applyDiscount(
       UUID customerId,
       UUID shopId,
@@ -295,16 +440,6 @@ public class DiscountServiceImpl implements DiscountService {
 
     return calculatePriceAfterApplyDiscountForOrder(discount, request);
   }
-
-  // private ApplyDiscountResponse buildOrderDiscountResponse(
-  // ApplyDiscountRequest request,
-  // PriceStatisticsResponse finalPriceStats) {
-  // return ApplyDiscountResponse.builder()
-  // .shopId(request.shopId())
-  // .discountId(request.discountId())
-  // .priceStatisticsResponse(finalPriceStats)
-  // .build();
-  // }
 
   private CustomerCartWithShop updateCartWithDiscount(
       CustomerCartWithShop originalCart,
@@ -331,15 +466,40 @@ public class DiscountServiceImpl implements DiscountService {
     validateDiscountType(discount);
   }
 
+  /**
+   * Validates usage limits with current discount state (optimistic locking safe).
+   * This method should be called within an optimistic locking context.
+   */
   private void validateUsageLimits(UUID customerId, EDiscount discount) {
+    // Check global usage limit with current state
     if (discount.getUsageLimitTotal() != null && discount.getUsageCount() >= discount.getUsageLimitTotal()) {
       throw new ResourceNotFoundException("Discount has reached its global usage limit");
     }
 
+    // Check per-customer usage limit
     int customerUsageCount = discountUsageRepository.countByDiscountIdAndCustomerId(discount.getId(), customerId);
     if (discount.getUsageLimitPerCustomer() != null && customerUsageCount >= discount.getUsageLimitPerCustomer()) {
       throw new ResourceNotFoundException(
           String.format("Customer %s has reached their usage limit for this discount", customerId));
+    }
+  }
+
+  /**
+   * Enhanced usage validation that considers the upcoming usage increment.
+   * This prevents overselling by checking if the discount would exceed limits after application.
+   */
+  private void validateUsageLimitsForApplication(UUID customerId, EDiscount discount) {
+    // Check if applying this discount would exceed global usage limit
+    if (discount.getUsageLimitTotal() != null && (discount.getUsageCount() + 1) > discount.getUsageLimitTotal()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Applying this discount would exceed the global usage limit");
+    }
+
+    // Check per-customer usage limit
+    int customerUsageCount = discountUsageRepository.countByDiscountIdAndCustomerId(discount.getId(), customerId);
+    if (discount.getUsageLimitPerCustomer() != null && (customerUsageCount + 1) > discount.getUsageLimitPerCustomer()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Applying this discount would exceed your personal usage limit");
     }
   }
 
@@ -437,10 +597,10 @@ public class DiscountServiceImpl implements DiscountService {
         .code(discount.getCode())
         .startDate(discount.getStartDate())
         .endDate(discount.getEndDate())
-        .usageLimit(discount.getUsageLimit())
+        .usageLimit(discount.getUsageLimitTotal())
         .usesCount(discount.getUsageCount())
-        .limitUsagePerCutomer(discount.getLimitUsagePerCutomer())
-        .maxReducedValue(discount.getMaxReducedValue())
+        .limitUsagePerCutomer(discount.getUsageLimitPerCustomer())
+        .maxReducedValue(discount.getMaxDiscountAmount())
         .minOrderValue(discount.getMinOrderValue())
         .isActive(discount.getIsActive())
         .appliesTo(discount.getAppliesTo())
@@ -491,10 +651,10 @@ public class DiscountServiceImpl implements DiscountService {
             .code(discount.getCode())
             .startDate(discount.getStartDate())
             .endDate(discount.getEndDate())
-            .usageLimit(discount.getUsageLimit())
+            .usageLimit(discount.getUsageLimitTotal())
             .usesCount(discount.getUsageCount())
-            .limitUsagePerCutomer(discount.getLimitUsagePerCutomer())
-            .maxReducedValue(discount.getMaxReducedValue())
+            .limitUsagePerCutomer(discount.getUsageLimitPerCustomer())
+            .maxReducedValue(discount.getMaxDiscountAmount())
             .minOrderValue(discount.getMinOrderValue())
             .isActive(discount.getIsActive())
             .appliesTo(discount.getAppliesTo())
@@ -576,63 +736,31 @@ public class DiscountServiceImpl implements DiscountService {
   @Override
   @org.springframework.transaction.annotation.Transactional
   public PriceStatisticsResponse applyDiscountToShop(TAccountRequest accountRequest, CheckoutRequest request) {
-    // Find and validate the discount
-    EDiscount discount = findAndValidateDiscount(accountRequest.id(), request.getGlobalProductDiscountId());
+    UUID discountId = request.getGlobalProductDiscountId();
+    UUID customerId = accountRequest.id();
 
-    // Get the total product price from the request
-    double totalProductPrice = request.getTotal();
-    double discountValue = discount.getValue();
-    double discountAmount = 0.0;
+    // Use optimistic locking to safely apply the discount
+    return optimisticLockingService.executeWithOptimisticLocking(discountId, discount -> {
+      // Validate discount eligibility
+      validateDiscountEligibility(customerId, discount);
 
-    // Calculate discount amount based on discount type
-    if (discount.getDiscountType() == DiscountType.PERCENTAGE) {
-      discountAmount = (totalProductPrice * discountValue) / 100;
+      // Get the total product price from the request
+      double totalProductPrice = request.getTotal();
+      double discountAmount = calculateDiscountAmount(discount, totalProductPrice);
 
-      // Apply maximum reduction if specified
-      if (discount.getMaxReducedValue() != null && discount.getMaxReducedValue() > 0) {
-        discountAmount = Math.min(discountAmount, discount.getMaxReducedValue());
-      }
-    } else {
-      // Fixed amount discount
-      discountAmount = Math.min(discountValue, totalProductPrice);
-    }
+      // Validate usage limits with current state
+      validateUsageLimitsForApplication(customerId, discount);
 
-    // Check if discount has usage limits
-    if (discount.getUsageLimit() > 0 && discount.getUsageCount() >= discount.getUsageLimit()) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Discount has reached its maximum usage limit");
-    }
+      // Calculate final price after discount
+      double finalPrice = Math.max(0, totalProductPrice - discountAmount);
 
-    // Check per-user usage limit
-    if (discount.getLimitUsagePerCutomer() > 0) {
-      int userUsageCount = discountUsageRepository.countByDiscountIdAndCustomerId(
-          discount.getId(), accountRequest.id());
-      if (userUsageCount >= discount.getLimitUsagePerCutomer()) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-            "You have reached the maximum usage limit for this discount");
-      }
-    }
-
-    // Calculate final price after discount
-    double finalPrice = Math.max(0, totalProductPrice - discountAmount);
-
-    try {
-      // Update discount usage count
+      // Atomically update discount usage count
       discount.setUsageCount(discount.getUsageCount() + 1);
-      discountRepository.save(discount);
+      EDiscount updatedDiscount = discountRepository.save(discount);
 
       // Create and save discount usage record
-      EDiscountUsage discountUsage = EDiscountUsage.builder()
-          .discount(discount)
-          .customerId(accountRequest.id())
-          .orderId(UUID.randomUUID()) // This should be replaced with actual order ID when available
-          .usageStatus(DiscountUsageStatus.SUCCESS)
-          .build();
-
-      // If there's a userDiscount associated with this usage, set it
-      if (discount.getUserDiscounts() != null && !discount.getUserDiscounts().isEmpty()) {
-        discountUsage.setUserDiscount(discount.getUserDiscounts().get(0));
-      }
-
+      EDiscountUsage discountUsage = createDiscountUsageRecord(
+          updatedDiscount, customerId, UUID.randomUUID(), discountAmount);
       discountUsageRepository.save(discountUsage);
 
       // Since totalProductPrice already comes from request.getTotal(), we'll use it as the totalPrice
@@ -646,10 +774,31 @@ public class DiscountServiceImpl implements DiscountService {
           .amountProductReduced(discountAmount) // Amount reduced from product price
           .finalPrice(finalPrice) // Final price after applying discount
           .build();
+    });
+  }
 
-    } catch (Exception e) {
-      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-          "Failed to apply discount: " + e.getMessage(), e);
+  /**
+   * Creates a discount usage record for tracking.
+   */
+  private EDiscountUsage createDiscountUsageRecord(EDiscount discount, UUID customerId,
+                                                  UUID orderId, double discountAmount) {
+    EDiscountUsage.EDiscountUsageBuilder builder = EDiscountUsage.builder()
+        .discount(discount)
+        .customerId(customerId)
+        .orderId(orderId)
+        .discountAmount(discountAmount)
+        .usageStatus(DiscountUsageStatus.SUCCESS);
+
+    // If there's a userDiscount associated with this usage, set it
+    if (discount.getUserDiscounts() != null && !discount.getUserDiscounts().isEmpty()) {
+      builder.userDiscount(discount.getUserDiscounts().get(0));
     }
+
+    return builder.build();
   }
 }
+
+
+
+
+
