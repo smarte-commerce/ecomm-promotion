@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,9 +23,15 @@ import com.winnguyen1905.promotion.model.request.AssignDiscountsToCampaignReques
 import com.winnguyen1905.promotion.model.request.CreateCampaignRequest;
 import com.winnguyen1905.promotion.model.request.SearchCampaignRequest;
 import com.winnguyen1905.promotion.model.request.UpdateCampaignRequest;
+import com.winnguyen1905.promotion.model.request.UpdateScheduleRequest;
+import com.winnguyen1905.promotion.model.request.UpdateTargetAudienceRequest;
+import com.winnguyen1905.promotion.model.request.AssignVendorsToCampaignRequest;
+import com.winnguyen1905.promotion.model.request.AssignProductsToCampaignRequest;
+import com.winnguyen1905.promotion.model.request.ApplyCampaignRequest;
 import com.winnguyen1905.promotion.model.response.CampaignStatisticsResponse;
 import com.winnguyen1905.promotion.model.response.CampaignVm;
 import com.winnguyen1905.promotion.model.response.PagedResponse;
+import com.winnguyen1905.promotion.model.response.PerformanceMetricsResponse;
 import com.winnguyen1905.promotion.secure.AccountRequest;
 import com.winnguyen1905.promotion.secure.ResponseMessage;
 import com.winnguyen1905.promotion.secure.TAccountRequest;
@@ -105,8 +112,8 @@ public class CampaignController {
   @GetMapping("/date-range")
   public ResponseEntity<java.util.List<CampaignVm>> getCampaignsByDateRange(
       @AccountRequest TAccountRequest accountRequest,
-      @org.springframework.web.bind.annotation.RequestParam Instant start,
-      @org.springframework.web.bind.annotation.RequestParam Instant end) {
+      @RequestParam Instant start,
+      @RequestParam Instant end) {
     return ResponseEntity.ok(campaignService.getCampaignsByDateRange(accountRequest, start, end));
   }
 
@@ -126,4 +133,65 @@ public class CampaignController {
         AssignDiscountsToCampaignRequest.builder().campaignId(campaignId).discountIds(discountIds).build());
     return ResponseEntity.ok().build();
   }
-} 
+
+  @GetMapping("/active")
+  public ResponseEntity<PagedResponse<CampaignVm>> getActiveCampaigns(
+      @AccountRequest TAccountRequest accountRequest,
+      SearchCampaignRequest request,
+      Pageable pageable) {
+    return ResponseEntity.ok(campaignService.getActiveCampaigns(accountRequest, request, pageable));
+  }
+
+  @PostMapping("/{campaignId}/apply")
+  public ResponseEntity<com.winnguyen1905.promotion.model.response.ApplyDiscountResponse> applyCampaign(
+      @AccountRequest TAccountRequest accountRequest,
+      @PathVariable UUID campaignId,
+      @RequestBody ApplyCampaignRequest request) {
+    return ResponseEntity.ok(campaignService.applyCampaign(accountRequest, request));
+  }
+
+  @PatchMapping("/{campaignId}/schedule")
+  public ResponseEntity<Void> updateSchedule(
+      @AccountRequest TAccountRequest accountRequest,
+      @PathVariable UUID campaignId,
+      @RequestBody UpdateScheduleRequest request) {
+    campaignService.updateCampaignSchedule(accountRequest, campaignId, request);
+    return ResponseEntity.ok().build();
+  }
+
+  @PatchMapping("/{campaignId}/target-audience")
+  public ResponseEntity<Void> updateTargetAudience(
+      @AccountRequest TAccountRequest accountRequest,
+      @PathVariable UUID campaignId,
+      @RequestBody UpdateTargetAudienceRequest request) {
+    campaignService.updateTargetAudience(accountRequest, campaignId, request);
+    return ResponseEntity.ok().build();
+  }
+
+  @PostMapping("/{campaignId}/assign-vendors")
+  public ResponseEntity<Void> assignVendors(
+      @AccountRequest TAccountRequest accountRequest,
+      @PathVariable UUID campaignId,
+      @RequestBody java.util.List<UUID> vendorIds) {
+    campaignService.assignVendorsToCampaign(accountRequest,
+        AssignVendorsToCampaignRequest.builder().campaignId(campaignId).vendorIds(vendorIds).build());
+    return ResponseEntity.ok().build();
+  }
+
+  @PostMapping("/{campaignId}/products")
+  public ResponseEntity<Void> assignProducts(
+      @AccountRequest TAccountRequest accountRequest,
+      @PathVariable UUID campaignId,
+      @RequestBody java.util.List<UUID> productIds) {
+    campaignService.assignProductsToCampaign(accountRequest,
+        AssignProductsToCampaignRequest.builder().campaignId(campaignId).productIds(productIds).build());
+    return ResponseEntity.ok().build();
+  }
+
+  @GetMapping("/{campaignId}/performance")
+  public ResponseEntity<PerformanceMetricsResponse> getPerformance(
+      @AccountRequest TAccountRequest accountRequest,
+      @PathVariable UUID campaignId) {
+    return ResponseEntity.ok(campaignService.getPerformanceMetrics(accountRequest, campaignId));
+  }
+}
