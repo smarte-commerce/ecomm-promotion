@@ -38,84 +38,84 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @Table(name = "campaigns", schema = "public")
 public class ECampaign {
-    
-    @Version
-    private long version;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Version
+  private long version;
 
-    @Column(name = "name", nullable = false)
-    private String name;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "description", columnDefinition = "TEXT")
-    private String description;
+  @Column(name = "name", nullable = false)
+  private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "campaign_type", nullable = false)
-    private CampaignType campaignType;
+  @Column(name = "description", columnDefinition = "TEXT")
+  private String description;
 
-    @Column(name = "start_date", nullable = false)
-    private Instant startDate;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "campaign_type", nullable = false)
+  private CampaignType campaignType;
 
-    @Column(name = "end_date", nullable = false)
-    private Instant endDate;
+  @Column(name = "start_date", nullable = false)
+  private Instant startDate;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status")
-    private CampaignStatus status = CampaignStatus.DRAFT;
+  @Column(name = "end_date", nullable = false)
+  private Instant endDate;
 
-    @Column(name = "budget")
-    private Double budget;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "status")
+  private CampaignStatus status = CampaignStatus.DRAFT;
 
-    @Column(name = "spent_budget")
-    private Double spentBudget = 0.0;
+  @Column(name = "budget")
+  private Double budget;
 
-    @Column(name = "target_audience", columnDefinition = "jsonb")
-    private JsonNode targetAudience;
+  @Column(name = "spent_budget")
+  private Double spentBudget = 0.0;
 
-    @Column(name = "created_by", nullable = false)
-    private UUID createdBy;
+  @Column(name = "target_audience", columnDefinition = "jsonb")
+  private JsonNode targetAudience;
 
-    @Column(name = "approved_by")
-    private UUID approvedBy;
+  @Column(name = "created_by", nullable = false)
+  private UUID createdBy;
 
-    @Column(name = "approved_at")
-    private Instant approvedAt;
+  @Column(name = "approved_by")
+  private UUID approvedBy;
 
-    @JsonIgnore
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private Instant createdAt;
+  @Column(name = "approved_at")
+  private Instant approvedAt;
 
-    @JsonIgnore
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private Instant updatedAt;
+  @JsonIgnore
+  @CreationTimestamp
+  @Column(name = "created_at", updatable = false)
+  private Instant createdAt;
 
-    @Default
-    @OneToMany(mappedBy = "campaign", fetch = FetchType.LAZY)
-    private List<EPromotionProgram> promotionPrograms = new ArrayList<>();
+  @JsonIgnore
+  @UpdateTimestamp
+  @Column(name = "updated_at")
+  private Instant updatedAt;
 
-    @PrePersist
-    protected void prePersist() {
-        if (this.id == null) {
-            this.id = UUID.randomUUID();
-        }
-        if (this.status == null) {
-            this.status = CampaignStatus.DRAFT;
-        }
-        if (this.spentBudget == null) {
-            this.spentBudget = 0.0;
-        }
+  @Default
+  @OneToMany(mappedBy = "campaign", fetch = FetchType.LAZY)
+  private List<EPromotionProgram> promotionPrograms = new ArrayList<>();
+
+  @PrePersist
+  protected void prePersist() {
+    if (this.id == null) {
+      this.id = UUID.randomUUID();
     }
-
-    public enum CampaignType {
-        FLASH_SALE, SEASONAL, CLEARANCE, NEW_PRODUCT, LOYALTY, AFFILIATE
+    if (this.status == null) {
+      this.status = CampaignStatus.DRAFT;
     }
-
-    public enum CampaignStatus {
-        DRAFT, SCHEDULED, ACTIVE, PAUSED, COMPLETED, CANCELLED
+    if (this.spentBudget == null) {
+      this.spentBudget = 0.0;
     }
-} 
+  }
+
+  public enum CampaignType {
+    FLASH_SALE, SEASONAL, CLEARANCE, NEW_PRODUCT, LOYALTY, AFFILIATE
+  }
+
+  public enum CampaignStatus {
+    DRAFT, SCHEDULED, ACTIVE, PAUSED, COMPLETED, CANCELLED
+  }
+}

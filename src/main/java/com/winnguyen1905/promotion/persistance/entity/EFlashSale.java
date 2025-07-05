@@ -32,63 +32,63 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @Table(name = "flash_sales", schema = "public")
 public class EFlashSale {
-    
-    @Version
-    private long version;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Version
+  private long version;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "program_id", nullable = false, unique = true)
-    private EPromotionProgram program;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "countdown_start", nullable = false)
-    private Instant countdownStart;
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "program_id", nullable = false, unique = true)
+  private EPromotionProgram program;
 
-    @Column(name = "countdown_end", nullable = false)
-    private Instant countdownEnd;
+  @Column(name = "countdown_start", nullable = false)
+  private Instant countdownStart;
 
-    @Column(name = "max_quantity", nullable = false)
-    private Integer maxQuantity;
+  @Column(name = "countdown_end", nullable = false)
+  private Instant countdownEnd;
 
-    @Column(name = "sold_quantity")
-    private Integer soldQuantity = 0;
+  @Column(name = "max_quantity", nullable = false)
+  private Integer maxQuantity;
 
-    @Column(name = "price_tiers", columnDefinition = "jsonb")
-    private JsonNode priceTiers;
+  @Column(name = "sold_quantity")
+  private Integer soldQuantity = 0;
 
-    @Column(name = "notification_sent")
-    private Boolean notificationSent = false;
+  @Column(name = "price_tiers", columnDefinition = "jsonb")
+  private JsonNode priceTiers;
 
-    @Column(name = "is_notify_enabled")
-    private Boolean isNotifyEnabled = true;
+  @Column(name = "notification_sent")
+  private Boolean notificationSent = false;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status")
-    private Status status = Status.UPCOMING;
+  @Column(name = "is_notify_enabled")
+  private Boolean isNotifyEnabled = true;
 
-    @PrePersist
-    protected void prePersist() {
-        if (this.id == null) {
-            this.id = UUID.randomUUID();
-        }
-        if (this.soldQuantity == null) {
-            this.soldQuantity = 0;
-        }
-        if (this.notificationSent == null) {
-            this.notificationSent = false;
-        }
-        if (this.isNotifyEnabled == null) {
-            this.isNotifyEnabled = true;
-        }
-        if (this.status == null) {
-            this.status = Status.UPCOMING;
-        }
+  @Enumerated(EnumType.STRING)
+  @Column(name = "status")
+  private Status status = Status.UPCOMING;
+
+  @PrePersist
+  protected void prePersist() {
+    if (this.id == null) {
+      this.id = UUID.randomUUID();
     }
-
-    public enum Status {
-        UPCOMING, LIVE, SOLD_OUT, ENDED
+    if (this.soldQuantity == null) {
+      this.soldQuantity = 0;
     }
-} 
+    if (this.notificationSent == null) {
+      this.notificationSent = false;
+    }
+    if (this.isNotifyEnabled == null) {
+      this.isNotifyEnabled = true;
+    }
+    if (this.status == null) {
+      this.status = Status.UPCOMING;
+    }
+  }
+
+  public enum Status {
+    UPCOMING, LIVE, SOLD_OUT, ENDED
+  }
+}
