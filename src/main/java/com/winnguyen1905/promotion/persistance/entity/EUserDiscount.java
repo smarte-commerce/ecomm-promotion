@@ -15,9 +15,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import jakarta.persistence.FetchType;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @NoArgsConstructor
 @AllArgsConstructor
