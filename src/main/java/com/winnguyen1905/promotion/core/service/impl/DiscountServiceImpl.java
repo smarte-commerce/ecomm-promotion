@@ -268,7 +268,8 @@ public class DiscountServiceImpl implements DiscountService {
   }
 
   /**
-   * Validates discount versions for optimistic locking if provided in the request.
+   * Validates discount versions for optimistic locking if provided in the
+   * request.
    */
   private void validateDiscountVersions(ApplyDiscountRequest request) {
     if (request.discountVersion() != null && request.discountId() != null) {
@@ -489,7 +490,8 @@ public class DiscountServiceImpl implements DiscountService {
 
   /**
    * Enhanced usage validation that considers the upcoming usage increment.
-   * This prevents overselling by checking if the discount would exceed limits after application.
+   * This prevents overselling by checking if the discount would exceed limits
+   * after application.
    */
   private void validateUsageLimitsForApplication(UUID customerId, EDiscount discount) {
     // Check if applying this discount would exceed global usage limit
@@ -564,8 +566,8 @@ public class DiscountServiceImpl implements DiscountService {
 
   private EDiscount buildDiscount(UUID userId, AddDiscountRequest request) {
     return EDiscount.builder()
-        .creatorType(request.creatorType() == EDiscount.CreatorType.VENDOR ? 
-            EDiscount.CreatorType.VENDOR : EDiscount.CreatorType.ADMIN)
+        .creatorType(request.creatorType() == EDiscount.CreatorType.VENDOR ? EDiscount.CreatorType.VENDOR
+            : EDiscount.CreatorType.ADMIN)
         .creatorId(userId)
         .discountType(request.discountType())
         .appliesTo(request.appliesTo())
@@ -766,7 +768,8 @@ public class DiscountServiceImpl implements DiscountService {
           updatedDiscount, customerId, UUID.randomUUID(), discountAmount);
       discountUsageRepository.save(discountUsage);
 
-      // Since totalProductPrice already comes from request.getTotal(), we'll use it as the totalPrice
+      // Since totalProductPrice already comes from request.getTotal(), we'll use it
+      // as the totalPrice
       // as shipping fee is not part of the discount calculation in this method
       return PriceStatisticsResponse.builder()
           .totalPrice(totalProductPrice) // Total price before any discounts
@@ -784,7 +787,7 @@ public class DiscountServiceImpl implements DiscountService {
    * Creates a discount usage record for tracking.
    */
   private EDiscountUsage createDiscountUsageRecord(EDiscount discount, UUID customerId,
-                                                  UUID orderId, double discountAmount) {
+      UUID orderId, double discountAmount) {
     EDiscountUsage.EDiscountUsageBuilder builder = EDiscountUsage.builder()
         .discount(discount)
         .customerId(customerId)
@@ -800,8 +803,3 @@ public class DiscountServiceImpl implements DiscountService {
     return builder.build();
   }
 }
-
-
-
-
-

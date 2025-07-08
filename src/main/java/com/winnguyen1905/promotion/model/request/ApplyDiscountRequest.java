@@ -53,7 +53,7 @@ public record ApplyDiscountRequest(
    * for optimistic locking support.
    */
   public ApplyDiscountRequest withVersions(Long discountVersion, Long shopDiscountVersion,
-                                         Long shippingDiscountVersion, Long globallyDiscountVersion) {
+      Long shippingDiscountVersion, Long globallyDiscountVersion) {
     return new ApplyDiscountRequest(
         this.shopId,
         this.discountId,
@@ -65,9 +65,6 @@ public record ApplyDiscountRequest(
         discountVersion,
         shopDiscountVersion,
         shippingDiscountVersion,
-        globallyDiscountVersion
-    );
+        globallyDiscountVersion);
   }
 }
-
-
