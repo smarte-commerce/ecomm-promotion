@@ -27,14 +27,15 @@ import com.winnguyen1905.promotion.secure.AccountRequest;
 import com.winnguyen1905.promotion.secure.ResponseMessage;
 import com.winnguyen1905.promotion.secure.TAccountRequest;
 
-import io.swagger.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/vendor-promotion-participations")
 @RequiredArgsConstructor
-// @Tag(name = "Vendor Promotion Participation", description = "Vendor Promotion Participation Management API")
+// @Tag(name = "Vendor Promotion Participation", description = "Vendor Promotion
+// Participation Management API")
 public class VendorPromotionParticipationController {
 
   private final VendorPromotionParticipationService participationService;
@@ -46,9 +47,9 @@ public class VendorPromotionParticipationController {
   public ResponseEntity<RestResponse<Void>> requestParticipation(
       @AccountRequest TAccountRequest accountRequest,
       @Valid @RequestBody VendorParticipationRequest request) {
-    
+
     participationService.requestParticipation(accountRequest, request);
-    
+
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(RestResponse.<Void>builder()
             .statusCode(HttpStatus.CREATED.value())
@@ -62,9 +63,9 @@ public class VendorPromotionParticipationController {
   public ResponseEntity<RestResponse<VendorParticipationVm>> getParticipationById(
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID id) {
-    
+
     VendorParticipationVm participation = participationService.getParticipationById(accountRequest, id);
-    
+
     return ResponseEntity.ok(RestResponse.<VendorParticipationVm>builder()
         .statusCode(HttpStatus.OK.value())
         .data(participation)
@@ -78,10 +79,10 @@ public class VendorPromotionParticipationController {
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID vendorId,
       Pageable pageable) {
-    
+
     PagedResponse<VendorParticipationVm> participations = participationService.getVendorParticipations(
         accountRequest, vendorId, pageable);
-    
+
     return ResponseEntity.ok(RestResponse.<PagedResponse<VendorParticipationVm>>builder()
         .statusCode(HttpStatus.OK.value())
         .data(participations)
@@ -95,10 +96,10 @@ public class VendorPromotionParticipationController {
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID programId,
       Pageable pageable) {
-    
+
     PagedResponse<VendorParticipationVm> participations = participationService.getProgramParticipations(
         accountRequest, programId, pageable);
-    
+
     return ResponseEntity.ok(RestResponse.<PagedResponse<VendorParticipationVm>>builder()
         .statusCode(HttpStatus.OK.value())
         .data(participations)
@@ -113,9 +114,9 @@ public class VendorPromotionParticipationController {
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID id,
       @Valid @RequestBody VendorParticipationRequest request) {
-    
+
     participationService.updateParticipation(accountRequest, id, request);
-    
+
     return ResponseEntity.ok(RestResponse.<Void>builder()
         .statusCode(HttpStatus.OK.value())
         .message("Participation updated successfully")
@@ -130,9 +131,9 @@ public class VendorPromotionParticipationController {
       @PathVariable UUID id,
       @RequestParam Status status,
       @RequestParam(required = false) String reason) {
-    
+
     participationService.updateParticipationStatus(accountRequest, id, status, reason);
-    
+
     return ResponseEntity.ok(RestResponse.<Void>builder()
         .statusCode(HttpStatus.OK.value())
         .message("Participation status updated successfully")
@@ -145,9 +146,9 @@ public class VendorPromotionParticipationController {
   public ResponseEntity<RestResponse<Void>> approveParticipation(
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID id) {
-    
+
     participationService.approveParticipation(accountRequest, id);
-    
+
     return ResponseEntity.ok(RestResponse.<Void>builder()
         .statusCode(HttpStatus.OK.value())
         .message("Participation approved successfully")
@@ -161,9 +162,9 @@ public class VendorPromotionParticipationController {
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID id,
       @RequestParam String reason) {
-    
+
     participationService.rejectParticipation(accountRequest, id, reason);
-    
+
     return ResponseEntity.ok(RestResponse.<Void>builder()
         .statusCode(HttpStatus.OK.value())
         .message("Participation rejected successfully")
@@ -177,9 +178,9 @@ public class VendorPromotionParticipationController {
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID id,
       @RequestParam String reason) {
-    
+
     participationService.withdrawParticipation(accountRequest, id, reason);
-    
+
     return ResponseEntity.ok(RestResponse.<Void>builder()
         .statusCode(HttpStatus.OK.value())
         .message("Participation withdrawn successfully")
@@ -192,9 +193,9 @@ public class VendorPromotionParticipationController {
   public ResponseEntity<RestResponse<Void>> calculatePerformanceMetrics(
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID id) {
-    
+
     participationService.calculatePerformanceMetrics(id);
-    
+
     return ResponseEntity.ok(RestResponse.<Void>builder()
         .statusCode(HttpStatus.OK.value())
         .message("Performance metrics calculated successfully")
@@ -206,10 +207,10 @@ public class VendorPromotionParticipationController {
   public ResponseEntity<RestResponse<PagedResponse<VendorParticipationVm>>> getMyParticipations(
       @AccountRequest TAccountRequest accountRequest,
       Pageable pageable) {
-    
+
     PagedResponse<VendorParticipationVm> participations = participationService.getVendorParticipations(
         accountRequest, accountRequest.id(), pageable);
-    
+
     return ResponseEntity.ok(RestResponse.<PagedResponse<VendorParticipationVm>>builder()
         .statusCode(HttpStatus.OK.value())
         .data(participations)
@@ -223,7 +224,7 @@ public class VendorPromotionParticipationController {
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable Status status,
       Pageable pageable) {
-    
+
     // This would require an additional method in the service that filters by status
     // For now, we'll return an empty implementation
     PagedResponse<VendorParticipationVm> participations = PagedResponse.<VendorParticipationVm>builder()
@@ -234,7 +235,7 @@ public class VendorPromotionParticipationController {
         .totalPages(0)
         .maxPageItems(0)
         .build();
-    
+
     return ResponseEntity.ok(RestResponse.<PagedResponse<VendorParticipationVm>>builder()
         .statusCode(HttpStatus.OK.value())
         .data(participations)
@@ -247,7 +248,7 @@ public class VendorPromotionParticipationController {
   public ResponseEntity<RestResponse<PagedResponse<VendorParticipationVm>>> getPendingApprovalParticipations(
       @AccountRequest TAccountRequest accountRequest,
       Pageable pageable) {
-    
+
     return getParticipationsByStatus(accountRequest, Status.PENDING, pageable);
   }
 
@@ -257,7 +258,7 @@ public class VendorPromotionParticipationController {
   public ResponseEntity<RestResponse<Void>> deleteParticipation(
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID id) {
-    
+
     // Note: This would require implementation in the service
     // For now, we'll just return a success response
     return ResponseEntity.ok(RestResponse.<Void>builder()
@@ -265,4 +266,4 @@ public class VendorPromotionParticipationController {
         .message("Participation deleted successfully")
         .build());
   }
-} 
+}

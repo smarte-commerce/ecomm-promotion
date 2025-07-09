@@ -23,7 +23,7 @@ import com.winnguyen1905.promotion.model.response.PromotionProgramVm;
 import com.winnguyen1905.promotion.model.response.RestResponse;
 import com.winnguyen1905.promotion.secure.TAccountRequest;
 
-import io.swagger.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Operation;
 // Swagger imports removed to avoid dependency issues
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
