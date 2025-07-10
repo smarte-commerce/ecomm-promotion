@@ -30,12 +30,14 @@ import com.winnguyen1905.promotion.model.request.ApplyDiscountRequest;
 import com.winnguyen1905.promotion.model.request.AssignCategoriesRequest;
 import com.winnguyen1905.promotion.model.request.AssignProductsRequest;
 import com.winnguyen1905.promotion.model.request.CheckoutRequest;
+import com.winnguyen1905.promotion.model.request.ComprehensiveDiscountRequest;
 import com.winnguyen1905.promotion.model.request.CustomerCart;
 import com.winnguyen1905.promotion.model.request.SearchDiscountRequest;
 import com.winnguyen1905.promotion.model.request.UpdateDiscountRequest;
 import com.winnguyen1905.promotion.model.request.UpdateDiscountStatusRequest;
 import com.winnguyen1905.promotion.model.request.CustomerCart.CustomerCartWithShop;
 import com.winnguyen1905.promotion.model.response.ApplyDiscountResponse;
+import com.winnguyen1905.promotion.model.response.ComprehensiveDiscountResponse;
 import com.winnguyen1905.promotion.model.response.DiscountValidityResponse;
 import com.winnguyen1905.promotion.model.response.DiscountVm;
 import com.winnguyen1905.promotion.model.response.PagedResponse;
@@ -240,12 +242,13 @@ public class DiscountServiceImpl implements DiscountService {
         .build();
   }
 
+  // OUTDATED
   @Override
   public ApplyDiscountResponse applyDiscountToOrder(TAccountRequest accountRequest, ApplyDiscountRequest request) {
     UUID customerId = accountRequest.id();
 
-    // Apply discounts with optimistic locking for each discount type
-    PriceStatisticsResponse finalPriceStats = applyDiscountsWithOptimisticLocking(customerId, request);
+    // Apply single discount with optimistic locking
+    PriceStatisticsResponse finalPriceStats = applySingleDiscountWithOptimisticLocking(customerId, request);
 
     return ApplyDiscountResponse.builder()
         .shopId(request.shopId())
@@ -253,8 +256,333 @@ public class DiscountServiceImpl implements DiscountService {
         .priceStatisticsResponse(finalPriceStats).build();
   }
 
+  // check the correctness of the logic here
+  @Override
+  @Transactional
+  public ComprehensiveDiscountResponse applyComprehensiveDiscounts(TAccountRequest accountRequest,
+      ComprehensiveDiscountRequest request) {
+    if (request == null || request.getCheckoutItems() == null || request.getCheckoutItems().isEmpty()) {
+      throw new BadRequestException("Invalid comprehensive discount request");
+    }
+
+    UUID customerId = accountRequest.id();
+    List<ComprehensiveDiscountResponse.DrawOrder> processedOrders = new ArrayList<>();
+
+    // Step 1: Apply shop-specific discounts for each order
+    for (ComprehensiveDiscountRequest.DrawOrder order : request.getCheckoutItems()) {
+      try {
+        ComprehensiveDiscountResponse.DrawOrder processedOrder = applyShopDiscountToOrder(customerId, order, request);
+        processedOrders.add(processedOrder);
+      } catch (Exception e) {
+        // Create a failed order response with zero discounts
+        ComprehensiveDiscountResponse.DrawOrder failedOrder = createFailedOrderResponse(order, request);
+        processedOrders.add(failedOrder);
+      }
+    }
+
+    // Step 2: Apply global product discount across all orders
+    processedOrders = applyGlobalProductDiscountToOrders(customerId, processedOrders, request);
+
+    // Step 3: Apply global shipping discount across all orders
+    processedOrders = applyGlobalShippingDiscountToOrders(customerId, processedOrders, request);
+
+    return ComprehensiveDiscountResponse.builder()
+        .sagaId(request.getSagaId())
+        .customerId(request.getCustomerId())
+        .eventType(request.getEventType())
+        .globalProductDiscountId(request.getGlobalProductDiscountId())
+        .globalShippingDiscountId(request.getGlobalShippingDiscountId())
+        .checkoutItems(processedOrders)
+        .build();
+  }
+
+  private ComprehensiveDiscountResponse.DrawOrder createFailedOrderResponse(
+      ComprehensiveDiscountRequest.DrawOrder order, ComprehensiveDiscountRequest request) {
+    return ComprehensiveDiscountResponse.DrawOrder.builder()
+        .shopId(order.getShopId())
+        .orderId(order.getOrderId())
+        .customerId(request.getCustomerId())
+        .items(convertToResponseItems(order.getItems(), false))
+        .shopProductDiscountId(order.getShopProductDiscountId())
+        .totalOrderBeforeDiscounts(calculateOrderTotal(order.getItems()))
+        .totalShopProductDiscount(0.0)
+        .totalGlobalProductDiscount(0.0)
+        .totalGlobalShippingDiscount(0.0)
+        .totalOrderAfterDiscounts(calculateOrderTotal(order.getItems()))
+        .build();
+  }
+
+  private ComprehensiveDiscountResponse.DrawOrder applyShopDiscountToOrder(UUID customerId,
+      ComprehensiveDiscountRequest.DrawOrder order, ComprehensiveDiscountRequest request) {
+    // Convert items to CustomerCartWithShop format for existing discount logic
+    List<CustomerCart.CartItem> cartItems = order.getItems().stream()
+        .map(item -> CustomerCart.CartItem.builder()
+            .productVariantId(item.getVariantId())
+            .quantity(item.getQuantity())
+            .price(item.getUnitPrice())
+            .isSelected(true)
+            .build())
+        .collect(Collectors.toList());
+
+    double orderTotal = calculateOrderTotal(order.getItems());
+
+    PriceStatisticsResponse priceStats = PriceStatisticsResponse.builder()
+        .totalProductPrice(orderTotal)
+        .totalShipFee(0.0)
+        .amountProductReduced(0.0)
+        .amountShipReduced(0.0)
+        .finalPrice(orderTotal)
+        .build();
+
+    CustomerCartWithShop cart = new CustomerCartWithShop(order.getShopId(), cartItems, priceStats);
+
+    // Apply shop product discount if available, otherwise use original price
+    double shopDiscountAmount = 0.0;
+    double finalTotal = orderTotal; // Default to original total if no discount
+
+    if (order.getShopProductDiscountId() != null) {
+      try {
+        ApplyDiscountRequest shopDiscountRequest = ApplyDiscountRequest.builder()
+            .shopId(order.getShopId())
+            .customerId(customerId)
+            .discountId(order.getShopProductDiscountId())
+            .customerCartWithShop(cart)
+            .build();
+
+        PriceStatisticsResponse shopResult = applySingleDiscountWithOptimisticLocking(customerId, shopDiscountRequest);
+        shopDiscountAmount = (orderTotal - shopResult.finalPrice());
+        cart = updateCartWithDiscount(cart, shopResult);
+        finalTotal = shopResult.finalPrice();
+      } catch (Exception e) {
+        // Continue with zero shop discount and original price
+        shopDiscountAmount = 0.0;
+        finalTotal = orderTotal;
+      }
+    }
+    // If no shop discount ID provided, explicitly use original order total (no
+    // discount applied)
+
+    return ComprehensiveDiscountResponse.DrawOrder.builder()
+        .shopId(order.getShopId())
+        .orderId(order.getOrderId())
+        .customerId(request.getCustomerId())
+        .items(convertToResponseItems(order.getItems(), true))
+        .shopProductDiscountId(order.getShopProductDiscountId())
+        .totalOrderBeforeDiscounts(orderTotal)
+        .totalShopProductDiscount(shopDiscountAmount)
+        .totalGlobalProductDiscount(0.0) // Will be set in global discount phase
+        .totalGlobalShippingDiscount(0.0) // Will be set in global shipping discount phase
+        .totalOrderAfterDiscounts(finalTotal)
+        .build();
+  }
+
+  private List<ComprehensiveDiscountResponse.DrawOrder> applyGlobalProductDiscountToOrders(
+      UUID customerId,
+      List<ComprehensiveDiscountResponse.DrawOrder> orders,
+      ComprehensiveDiscountRequest request) {
+
+    // If no global product discount ID provided, return orders as-is
+    if (request.getGlobalProductDiscountId() == null) {
+      return orders;
+    }
+
+    List<ComprehensiveDiscountResponse.DrawOrder> updatedOrders = new ArrayList<>();
+
+    for (ComprehensiveDiscountResponse.DrawOrder order : orders) {
+      try {
+        // Convert order to cart format for discount calculation
+        List<CustomerCart.CartItem> cartItems = order.getItems().stream()
+            .map(item -> CustomerCart.CartItem.builder()
+                .productVariantId(item.getVariantId())
+                .quantity(item.getQuantity())
+                .price(item.getUnitPrice())
+                .isSelected(true)
+                .build())
+            .collect(Collectors.toList());
+
+        PriceStatisticsResponse currentPriceStats = PriceStatisticsResponse.builder()
+            .totalProductPrice(order.getTotalOrderAfterDiscounts())
+            .totalShipFee(0.0)
+            .amountProductReduced(0.0)
+            .amountShipReduced(0.0)
+            .finalPrice(order.getTotalOrderAfterDiscounts())
+            .build();
+
+        CustomerCartWithShop cart = new CustomerCartWithShop(order.getShopId(), cartItems, currentPriceStats);
+
+        ApplyDiscountRequest globalDiscountRequest = ApplyDiscountRequest.builder()
+            .shopId(order.getShopId())
+            .customerId(customerId)
+            .discountId(request.getGlobalProductDiscountId())
+            .customerCartWithShop(cart)
+            .build();
+
+        PriceStatisticsResponse globalResult = applySingleDiscountWithOptimisticLocking(customerId,
+            globalDiscountRequest);
+        double globalDiscountAmount = (order.getTotalOrderAfterDiscounts() - globalResult.finalPrice());
+
+        // Create updated order with global product discount applied
+        ComprehensiveDiscountResponse.DrawOrder updatedOrder = ComprehensiveDiscountResponse.DrawOrder.builder()
+            .shopId(order.getShopId())
+            .orderId(order.getOrderId())
+            .customerId(order.getCustomerId())
+            .items(order.getItems())
+            .shopProductDiscountId(order.getShopProductDiscountId())
+            .totalOrderBeforeDiscounts(order.getTotalOrderBeforeDiscounts())
+            .totalShopProductDiscount(order.getTotalShopProductDiscount())
+            .totalGlobalProductDiscount(globalDiscountAmount)
+            .totalGlobalShippingDiscount(order.getTotalGlobalShippingDiscount())
+            .totalOrderAfterDiscounts(globalResult.finalPrice())
+            .build();
+
+        updatedOrders.add(updatedOrder);
+      } catch (Exception e) {
+        // Keep original order if global discount fails (no discount applied)
+        updatedOrders.add(order);
+      }
+    }
+
+    return updatedOrders;
+  }
+
+  private List<ComprehensiveDiscountResponse.DrawOrder> applyGlobalShippingDiscountToOrders(
+      UUID customerId,
+      List<ComprehensiveDiscountResponse.DrawOrder> orders,
+      ComprehensiveDiscountRequest request) {
+
+    // If no global shipping discount ID provided, return orders as-is
+    if (request.getGlobalShippingDiscountId() == null) {
+      return orders;
+    }
+
+    List<ComprehensiveDiscountResponse.DrawOrder> updatedOrders = new ArrayList<>();
+
+    for (ComprehensiveDiscountResponse.DrawOrder order : orders) {
+      try {
+        // Convert order to cart format for discount calculation
+        List<CustomerCart.CartItem> cartItems = order.getItems().stream()
+            .map(item -> CustomerCart.CartItem.builder()
+                .productVariantId(item.getVariantId())
+                .quantity(item.getQuantity())
+                .price(item.getUnitPrice())
+                .isSelected(true)
+                .build())
+            .collect(Collectors.toList());
+
+        PriceStatisticsResponse currentPriceStats = PriceStatisticsResponse.builder()
+            .totalProductPrice(order.getTotalOrderAfterDiscounts())
+            .totalShipFee(0.0) // Assuming shipping fee calculation logic would be here
+            .amountProductReduced(0.0)
+            .amountShipReduced(0.0)
+            .finalPrice(order.getTotalOrderAfterDiscounts())
+            .build();
+
+        CustomerCartWithShop cart = new CustomerCartWithShop(order.getShopId(), cartItems, currentPriceStats);
+
+        ApplyDiscountRequest shippingDiscountRequest = ApplyDiscountRequest.builder()
+            .shopId(order.getShopId())
+            .customerId(customerId)
+            .discountId(request.getGlobalShippingDiscountId())
+            .customerCartWithShop(cart)
+            .build();
+
+        PriceStatisticsResponse shippingResult = applySingleDiscountWithOptimisticLocking(customerId,
+            shippingDiscountRequest);
+        double shippingDiscountAmount = (order.getTotalOrderAfterDiscounts() - shippingResult.finalPrice());
+
+        // Create updated order with global shipping discount applied
+        ComprehensiveDiscountResponse.DrawOrder updatedOrder = ComprehensiveDiscountResponse.DrawOrder.builder()
+            .shopId(order.getShopId())
+            .orderId(order.getOrderId())
+            .customerId(order.getCustomerId())
+            .items(order.getItems())
+            .shopProductDiscountId(order.getShopProductDiscountId())
+            .totalOrderBeforeDiscounts(order.getTotalOrderBeforeDiscounts())
+            .totalShopProductDiscount(order.getTotalShopProductDiscount())
+            .totalGlobalProductDiscount(order.getTotalGlobalProductDiscount())
+            .totalGlobalShippingDiscount(shippingDiscountAmount)
+            .totalOrderAfterDiscounts(shippingResult.finalPrice())
+            .build();
+
+        updatedOrders.add(updatedOrder);
+      } catch (Exception e) {
+        // Keep original order if shipping discount fails (no discount applied)
+        updatedOrders.add(order);
+      }
+    }
+
+    return updatedOrders;
+  }
+
+  /**
+   * @deprecated Replaced by applyShopDiscountToOrder in the new structured flow
+   */
+  @Deprecated
+  private ComprehensiveDiscountResponse.DrawOrder processShopOrder(UUID customerId,
+      ComprehensiveDiscountRequest.DrawOrder order, ComprehensiveDiscountRequest request) {
+    // This method is deprecated - use the new structured flow instead
+    return applyShopDiscountToOrder(customerId, order, request);
+  }
+
+  private List<ComprehensiveDiscountResponse.DrawOrderItem> convertToResponseItems(
+      List<ComprehensiveDiscountRequest.DrawOrderItem> items, boolean eligible) {
+    return items.stream()
+        .map(item -> ComprehensiveDiscountResponse.DrawOrderItem.builder()
+            .productId(item.getProductId())
+            .variantId(item.getVariantId())
+            .quantity(item.getQuantity())
+            .unitPrice(item.getUnitPrice())
+            .productSku(item.getProductSku())
+            .isEligibleForDiscount(eligible)
+            .build())
+        .collect(Collectors.toList());
+  }
+
+  private double calculateOrderTotal(List<ComprehensiveDiscountRequest.DrawOrderItem> items) {
+    return items.stream()
+        .mapToDouble(item -> item.getUnitPrice() * item.getQuantity())
+        .sum();
+  }
+
+  /**
+   * Applies a single discount with optimistic locking for each discount.
+   */
+  private PriceStatisticsResponse applySingleDiscountWithOptimisticLocking(UUID customerId,
+      ApplyDiscountRequest request) {
+    if (request.discountId() == null) {
+      // Return original cart values if no discount provided
+      return PriceStatisticsResponse.builder()
+          .totalProductPrice(request.customerCartWithShop().priceStatistic().totalProductPrice())
+          .totalShipFee(request.customerCartWithShop().priceStatistic().totalShipFee())
+          .totalPrice(request.customerCartWithShop().priceStatistic().finalPrice())
+          .amountProductReduced(0.0)
+          .amountShipReduced(0.0)
+          .finalPrice(request.customerCartWithShop().priceStatistic().finalPrice())
+          .build();
+    }
+
+    // Validate version information if provided
+    if (request.discountVersion() != null) {
+      optimisticLockingService.validateVersion(request.discountId(), request.discountVersion());
+    }
+
+    // Get and validate the discount
+    EDiscount discount = findAndValidateDiscount(customerId, request.discountId());
+    validateDiscountEligibility(customerId, discount);
+
+    // Apply discount with optimistic locking
+    return applyDiscountWithLocking(
+        customerId,
+        request.shopId(),
+        discount,
+        request.customerCartWithShop(),
+        request.discountVersion());
+  }
+
   /**
    * Applies multiple discounts with optimistic locking for each discount.
+   * 
+   * @deprecated Use applySingleDiscountWithOptimisticLocking for better control
    */
   private PriceStatisticsResponse applyDiscountsWithOptimisticLocking(UUID customerId, ApplyDiscountRequest request) {
     // Validate version information if provided
@@ -349,6 +677,7 @@ public class DiscountServiceImpl implements DiscountService {
 
     // Step 3: Finally apply shipping discount with optimistic locking
     CustomerCartWithShop cartAfterGlobalDiscount = updateCartWithDiscount(cartAfterShopDiscount, globalPriceStats);
+
     return applyDiscountWithLocking(
         customerId,
         originalRequest.shopId(),
@@ -745,7 +1074,7 @@ public class DiscountServiceImpl implements DiscountService {
     UUID customerId = accountRequest.id();
 
     // Use optimistic locking to safely apply the discount
-    return optimisticLockingService.executeWithOptimisticLocking(discountId, discount -> {
+    return (PriceStatisticsResponse) optimisticLockingService.executeWithOptimisticLocking(discountId, discount -> {
       // Validate discount eligibility
       validateDiscountEligibility(customerId, discount);
 
@@ -776,7 +1105,6 @@ public class DiscountServiceImpl implements DiscountService {
           .totalProductPrice(totalProductPrice) // Original product price
           .totalShipFee(0.0) // No shipping fee in this calculation
           .amountShipReduced(0.0) // No shipping discount applied in this method
-          .totalDiscountVoucher(discountAmount) // Total discount from voucher
           .amountProductReduced(discountAmount) // Amount reduced from product price
           .finalPrice(finalPrice) // Final price after applying discount
           .build();

@@ -21,9 +21,11 @@ import com.winnguyen1905.promotion.model.request.ApplyDiscountRequest;
 import com.winnguyen1905.promotion.model.request.AssignCategoriesRequest;
 import com.winnguyen1905.promotion.model.request.AssignProductsRequest;
 import com.winnguyen1905.promotion.model.request.CheckoutRequest;
+import com.winnguyen1905.promotion.model.request.ComprehensiveDiscountRequest;
 import com.winnguyen1905.promotion.model.request.SearchDiscountRequest;
 import com.winnguyen1905.promotion.model.request.UpdateDiscountStatusRequest;
 import com.winnguyen1905.promotion.model.response.ApplyDiscountResponse;
+import com.winnguyen1905.promotion.model.response.ComprehensiveDiscountResponse;
 import com.winnguyen1905.promotion.model.response.DiscountValidityResponse;
 import com.winnguyen1905.promotion.model.response.DiscountVm;
 import com.winnguyen1905.promotion.model.response.PagedResponse;
@@ -124,9 +126,19 @@ public class DiscountController {
     return ResponseEntity.ok(discountService.applyDiscountToCart(accountRequest, request));
   }
 
+  @PostMapping("/apply-to-order")
+  @ResponseMessage(message = "Apply discount to order success")
   public ResponseEntity<ApplyDiscountResponse> applyDiscountToOrder(@AccountRequest TAccountRequest accountRequest,
-      ApplyDiscountRequest request) {
+      @RequestBody ApplyDiscountRequest request) {
     return ResponseEntity.ok(discountService.applyDiscountToOrder(accountRequest, request));
+  }
+
+  @PostMapping("/apply-comprehensive")
+  @ResponseMessage(message = "Apply comprehensive discounts success")
+  public ResponseEntity<ComprehensiveDiscountResponse> applyComprehensiveDiscounts(
+      @AccountRequest TAccountRequest accountRequest,
+      @RequestBody ComprehensiveDiscountRequest request) {
+    return ResponseEntity.ok(discountService.applyComprehensiveDiscounts(accountRequest, request));
   }
 
 }
