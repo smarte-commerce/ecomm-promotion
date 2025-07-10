@@ -6,11 +6,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import com.winnguyen1905.promotion.persistance.entity.EDiscountUsage;
 
 @Repository
-public interface DiscountUsageRepository extends JpaRepository<EDiscountUsage, UUID> {
+public interface DiscountUsageRepository extends JpaRepository<EDiscountUsage, UUID>, JpaSpecificationExecutor<EDiscountUsage> {
     
     @Query("SELECT COUNT(du) FROM EDiscountUsage du WHERE du.customerId = :customerId AND du.discount.id = :discountId")
     int countByDiscountIdAndCustomerId(@Param("discountId") UUID discountId, @Param("customerId") UUID customerId);
