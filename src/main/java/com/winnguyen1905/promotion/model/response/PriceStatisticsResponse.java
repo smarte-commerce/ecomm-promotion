@@ -13,7 +13,10 @@ public record PriceStatisticsResponse(
     Double totalShipFee,
     Double totalPrice,
     Double amountShipReduced,
-    Double totalDiscountVoucher,
+    Double totalShopProductDiscount,
+    Double totalGlobalProductDiscount,
+    Double totalGlobalShippingDiscount,
+    String shippingDiscountType, // FIXED or PERCENTAGE
     Double amountProductReduced,
     Double finalPrice) implements AbstractModel {
   @Builder
@@ -24,7 +27,10 @@ public record PriceStatisticsResponse(
       Double totalPrice,
 
       Double amountShipReduced,
-      Double totalDiscountVoucher,
+      Double totalShopProductDiscount,
+      Double totalGlobalProductDiscount,
+      Double totalGlobalShippingDiscount,
+      String shippingDiscountType, // FIXED or PERCENTAGE
       Double amountProductReduced,
       Double finalPrice) {
     this.discountId = discountId;
@@ -32,7 +38,10 @@ public record PriceStatisticsResponse(
     this.totalShipFee = totalShipFee;
     this.totalPrice = totalPrice;
     this.amountShipReduced = amountShipReduced;
-    this.totalDiscountVoucher = totalDiscountVoucher;
+    this.totalShopProductDiscount = totalShopProductDiscount;
+    this.totalGlobalProductDiscount = totalGlobalProductDiscount;
+    this.totalGlobalShippingDiscount = totalGlobalShippingDiscount;
+    this.shippingDiscountType = shippingDiscountType;
     this.amountProductReduced = amountProductReduced;
     this.finalPrice = finalPrice;
   }
