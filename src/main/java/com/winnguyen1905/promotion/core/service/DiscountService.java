@@ -49,6 +49,8 @@ public interface DiscountService {
 
   ApplyDiscountResponse applyDiscountToOrder(TAccountRequest accountRequest, ApplyDiscountRequest request);
 
+  ComprehensiveDiscountResponse applyComprehensiveDiscounts(TAccountRequest accountRequest, ComprehensiveDiscountRequest request);
+
   PriceStatisticsResponse applyDiscountToShop(TAccountRequest accountRequest, CheckoutRequest request);
 
   // // Shop endpoints
