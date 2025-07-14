@@ -88,7 +88,7 @@ public class OptimisticLockingIntegrationTest {
 
         testDiscount = discountRepository.save(testDiscount);
 
-        testAccount = new TAccountRequest(UUID.randomUUID(), "test@example.com", null, null);
+        testAccount = new TAccountRequest(UUID.randomUUID(), "test@example.com", null, null, null);
 
         testCheckoutRequest = CheckoutRequest.builder()
             .globalProductDiscountId(testDiscount.getId())
@@ -116,7 +116,7 @@ public class OptimisticLockingIntegrationTest {
         // When: Multiple threads try to apply the discount concurrently
         for (int i = 0; i < numberOfThreads; i++) {
             UUID customerId = UUID.randomUUID(); // Different customer for each thread
-            TAccountRequest account = new TAccountRequest(customerId, "customer" + i + "@example.com", null, null);
+            TAccountRequest account = new TAccountRequest(customerId, "customer" + i + "@example.com", null, null, null);
             
             CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
                 try {
