@@ -1,6 +1,7 @@
 package com.winnguyen1905.promotion.core.controller;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
@@ -15,7 +16,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.winnguyen1905.promotion.core.service.CampaignService;
@@ -28,170 +28,259 @@ import com.winnguyen1905.promotion.model.request.UpdateTargetAudienceRequest;
 import com.winnguyen1905.promotion.model.request.AssignVendorsToCampaignRequest;
 import com.winnguyen1905.promotion.model.request.AssignProductsToCampaignRequest;
 import com.winnguyen1905.promotion.model.request.ApplyCampaignRequest;
+import com.winnguyen1905.promotion.model.response.ApplyDiscountResponse;
 import com.winnguyen1905.promotion.model.response.CampaignStatisticsResponse;
 import com.winnguyen1905.promotion.model.response.CampaignVm;
 import com.winnguyen1905.promotion.model.response.PagedResponse;
 import com.winnguyen1905.promotion.model.response.PerformanceMetricsResponse;
+import com.winnguyen1905.promotion.model.response.RestResponse;
 import com.winnguyen1905.promotion.secure.AccountRequest;
-import com.winnguyen1905.promotion.secure.ResponseMessage;
 import com.winnguyen1905.promotion.secure.TAccountRequest;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("campaigns")
+@RequestMapping("/api/v1/campaigns")
+@Tag(name = "Campaigns", description = "Campaign Management API")
 public class CampaignController {
 
   private final CampaignService campaignService;
 
   @PostMapping
-  @ResponseStatus(HttpStatus.CREATED)
-  @ResponseMessage(message = "Create campaign success")
-  public ResponseEntity<Void> createCampaign(
+  @Operation(summary = "Create a new campaign")
+  public ResponseEntity<RestResponse<Void>> createCampaign(
       @AccountRequest TAccountRequest accountRequest,
-      @RequestBody CreateCampaignRequest request) {
+      @Valid @RequestBody CreateCampaignRequest request) {
     campaignService.createCampaign(accountRequest, request);
-    return ResponseEntity.status(HttpStatus.CREATED).build();
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(RestResponse.<Void>builder()
+            .statusCode(HttpStatus.CREATED.value())
+            .message("Campaign created successfully")
+            .build());
   }
 
   @GetMapping("/{id}")
-  @ResponseMessage(message = "Get campaign detail success")
-  public ResponseEntity<CampaignVm> getCampaignById(
+  @Operation(summary = "Get campaign by ID")
+  public ResponseEntity<RestResponse<CampaignVm>> getCampaignById(
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID id) {
-    return ResponseEntity.ok(campaignService.getCampaignById(accountRequest, id));
+    CampaignVm campaign = campaignService.getCampaignById(accountRequest, id);
+    return ResponseEntity.ok(RestResponse.<CampaignVm>builder()
+        .statusCode(HttpStatus.OK.value())
+        .data(campaign)
+        .message("Campaign retrieved successfully")
+        .build());
   }
 
   @PutMapping("/{id}")
-  @ResponseMessage(message = "Update campaign success")
-  public ResponseEntity<Void> updateCampaign(
+  @Operation(summary = "Update campaign")
+  public ResponseEntity<RestResponse<Void>> updateCampaign(
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID id,
-      @RequestBody UpdateCampaignRequest request) {
+      @Valid @RequestBody UpdateCampaignRequest request) {
     campaignService.updateCampaign(accountRequest, id, request);
-    return ResponseEntity.ok().build();
+    return ResponseEntity.ok(RestResponse.<Void>builder()
+        .statusCode(HttpStatus.OK.value())
+        .message("Campaign updated successfully")
+        .build());
   }
 
   @DeleteMapping("/{id}")
-  @ResponseMessage(message = "Delete campaign success")
-  public ResponseEntity<Void> deleteCampaign(
+  @Operation(summary = "Delete campaign")
+  public ResponseEntity<RestResponse<Void>> deleteCampaign(
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID id) {
     campaignService.deleteCampaign(accountRequest, id);
-    return ResponseEntity.ok().build();
+    return ResponseEntity.ok(RestResponse.<Void>builder()
+        .statusCode(HttpStatus.OK.value())
+        .message("Campaign deleted successfully")
+        .build());
   }
 
   @PatchMapping("/{id}/activate")
-  @ResponseMessage(message = "Activate campaign success")
-  public ResponseEntity<Void> activateCampaign(
+  @Operation(summary = "Activate campaign")
+  public ResponseEntity<RestResponse<Void>> activateCampaign(
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID id) {
     campaignService.activateCampaign(accountRequest, id);
-    return ResponseEntity.ok().build();
+    return ResponseEntity.ok(RestResponse.<Void>builder()
+        .statusCode(HttpStatus.OK.value())
+        .message("Campaign activated successfully")
+        .build());
   }
 
   @PatchMapping("/{id}/deactivate")
-  @ResponseMessage(message = "Deactivate campaign success")
-  public ResponseEntity<Void> deactivateCampaign(
+  @Operation(summary = "Deactivate campaign")
+  public ResponseEntity<RestResponse<Void>> deactivateCampaign(
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID id) {
     campaignService.deactivateCampaign(accountRequest, id);
-    return ResponseEntity.ok().build();
+    return ResponseEntity.ok(RestResponse.<Void>builder()
+        .statusCode(HttpStatus.OK.value())
+        .message("Campaign deactivated successfully")
+        .build());
   }
 
   @PostMapping("/search")
-  @ResponseMessage(message = "Search campaigns success")
-  public ResponseEntity<PagedResponse<CampaignVm>> getCampaigns(
+  @Operation(summary = "Search campaigns with filters")
+  public ResponseEntity<RestResponse<PagedResponse<CampaignVm>>> getCampaigns(
       @AccountRequest TAccountRequest accountRequest,
       @RequestBody SearchCampaignRequest request,
       Pageable pageable) {
-    return ResponseEntity.ok(campaignService.getCampaigns(accountRequest, request, pageable));
-  }
-
-  @GetMapping("/date-range")
-  public ResponseEntity<java.util.List<CampaignVm>> getCampaignsByDateRange(
-      @AccountRequest TAccountRequest accountRequest,
-      @RequestParam Instant start,
-      @RequestParam Instant end) {
-    return ResponseEntity.ok(campaignService.getCampaignsByDateRange(accountRequest, start, end));
-  }
-
-  @GetMapping("/{campaignId}/statistics")
-  public ResponseEntity<CampaignStatisticsResponse> getCampaignStatistics(
-      @AccountRequest TAccountRequest accountRequest,
-      @PathVariable UUID campaignId) {
-    return ResponseEntity.ok(campaignService.getCampaignStatistics(accountRequest, campaignId));
-  }
-
-  @PostMapping("/{campaignId}/assign-discounts")
-  public ResponseEntity<Void> assignDiscountsToCampaign(
-      @AccountRequest TAccountRequest accountRequest,
-      @PathVariable UUID campaignId,
-      @RequestBody java.util.List<UUID> discountIds) {
-    campaignService.assignDiscountsToCampaign(accountRequest,
-        AssignDiscountsToCampaignRequest.builder().campaignId(campaignId).discountIds(discountIds).build());
-    return ResponseEntity.ok().build();
+    PagedResponse<CampaignVm> campaigns = campaignService.getCampaigns(accountRequest, request, pageable);
+    return ResponseEntity.ok(RestResponse.<PagedResponse<CampaignVm>>builder()
+        .statusCode(HttpStatus.OK.value())
+        .data(campaigns)
+        .message("Campaigns retrieved successfully")
+        .build());
   }
 
   @GetMapping("/active")
-  public ResponseEntity<PagedResponse<CampaignVm>> getActiveCampaigns(
+  @Operation(summary = "Get active campaigns")
+  public ResponseEntity<RestResponse<PagedResponse<CampaignVm>>> getActiveCampaigns(
       @AccountRequest TAccountRequest accountRequest,
-      SearchCampaignRequest request,
+      @RequestBody SearchCampaignRequest request,
       Pageable pageable) {
-    return ResponseEntity.ok(campaignService.getActiveCampaigns(accountRequest, request, pageable));
+    PagedResponse<CampaignVm> campaigns = campaignService.getActiveCampaigns(accountRequest, request, pageable);
+    return ResponseEntity.ok(RestResponse.<PagedResponse<CampaignVm>>builder()
+        .statusCode(HttpStatus.OK.value())
+        .data(campaigns)
+        .message("Active campaigns retrieved successfully")
+        .build());
   }
 
-  @PostMapping("/{campaignId}/apply")
-  public ResponseEntity<com.winnguyen1905.promotion.model.response.ApplyDiscountResponse> applyCampaign(
+  @GetMapping("/date-range")
+  @Operation(summary = "Get campaigns by date range")
+  public ResponseEntity<RestResponse<List<CampaignVm>>> getCampaignsByDateRange(
       @AccountRequest TAccountRequest accountRequest,
-      @PathVariable UUID campaignId,
-      @RequestBody ApplyCampaignRequest request) {
-    return ResponseEntity.ok(campaignService.applyCampaign(accountRequest, request));
+      @RequestParam Instant start,
+      @RequestParam Instant end) {
+    List<CampaignVm> campaigns = campaignService.getCampaignsByDateRange(accountRequest, start, end);
+    return ResponseEntity.ok(RestResponse.<List<CampaignVm>>builder()
+        .statusCode(HttpStatus.OK.value())
+        .data(campaigns)
+        .message("Campaigns by date range retrieved successfully")
+        .build());
   }
 
-  @PatchMapping("/{campaignId}/schedule")
-  public ResponseEntity<Void> updateSchedule(
+  @GetMapping("/{campaignId}/statistics")
+  @Operation(summary = "Get campaign statistics")
+  public ResponseEntity<RestResponse<CampaignStatisticsResponse>> getCampaignStatistics(
       @AccountRequest TAccountRequest accountRequest,
-      @PathVariable UUID campaignId,
-      @RequestBody UpdateScheduleRequest request) {
-    campaignService.updateCampaignSchedule(accountRequest, campaignId, request);
-    return ResponseEntity.ok().build();
+      @PathVariable UUID campaignId) {
+    CampaignStatisticsResponse statistics = campaignService.getCampaignStatistics(accountRequest, campaignId);
+    return ResponseEntity.ok(RestResponse.<CampaignStatisticsResponse>builder()
+        .statusCode(HttpStatus.OK.value())
+        .data(statistics)
+        .message("Campaign statistics retrieved successfully")
+        .build());
   }
 
-  @PatchMapping("/{campaignId}/target-audience")
-  public ResponseEntity<Void> updateTargetAudience(
+  @PostMapping("/{campaignId}/assign-discounts")
+  @Operation(summary = "Assign discounts to campaign")
+  public ResponseEntity<RestResponse<Void>> assignDiscountsToCampaign(
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID campaignId,
-      @RequestBody UpdateTargetAudienceRequest request) {
-    campaignService.updateTargetAudience(accountRequest, campaignId, request);
-    return ResponseEntity.ok().build();
+      @Valid @RequestBody List<UUID> discountIds) {
+    AssignDiscountsToCampaignRequest request = AssignDiscountsToCampaignRequest.builder()
+        .campaignId(campaignId)
+        .discountIds(discountIds)
+        .build();
+    campaignService.assignDiscountsToCampaign(accountRequest, request);
+    return ResponseEntity.ok(RestResponse.<Void>builder()
+        .statusCode(HttpStatus.OK.value())
+        .message("Discounts assigned to campaign successfully")
+        .build());
   }
 
   @PostMapping("/{campaignId}/assign-vendors")
-  public ResponseEntity<Void> assignVendors(
+  @Operation(summary = "Assign vendors to campaign")
+  public ResponseEntity<RestResponse<Void>> assignVendors(
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID campaignId,
-      @RequestBody java.util.List<UUID> vendorIds) {
-    campaignService.assignVendorsToCampaign(accountRequest,
-        AssignVendorsToCampaignRequest.builder().campaignId(campaignId).vendorIds(vendorIds).build());
-    return ResponseEntity.ok().build();
+      @Valid @RequestBody List<UUID> vendorIds) {
+    AssignVendorsToCampaignRequest request = AssignVendorsToCampaignRequest.builder()
+        .campaignId(campaignId)
+        .vendorIds(vendorIds)
+        .build();
+    campaignService.assignVendorsToCampaign(accountRequest, request);
+    return ResponseEntity.ok(RestResponse.<Void>builder()
+        .statusCode(HttpStatus.OK.value())
+        .message("Vendors assigned to campaign successfully")
+        .build());
   }
 
-  @PostMapping("/{campaignId}/products")
-  public ResponseEntity<Void> assignProducts(
+  @PostMapping("/{campaignId}/assign-products")
+  @Operation(summary = "Assign products to campaign")
+  public ResponseEntity<RestResponse<Void>> assignProducts(
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID campaignId,
-      @RequestBody java.util.List<UUID> productIds) {
-    campaignService.assignProductsToCampaign(accountRequest,
-        AssignProductsToCampaignRequest.builder().campaignId(campaignId).productIds(productIds).build());
-    return ResponseEntity.ok().build();
+      @Valid @RequestBody List<UUID> productIds) {
+    AssignProductsToCampaignRequest request = AssignProductsToCampaignRequest.builder()
+        .campaignId(campaignId)
+        .productIds(productIds)
+        .build();
+    campaignService.assignProductsToCampaign(accountRequest, request);
+    return ResponseEntity.ok(RestResponse.<Void>builder()
+        .statusCode(HttpStatus.OK.value())
+        .message("Products assigned to campaign successfully")
+        .build());
+  }
+
+  @PostMapping("/{campaignId}/apply")
+  @Operation(summary = "Apply campaign to customer order")
+  public ResponseEntity<RestResponse<ApplyDiscountResponse>> applyCampaign(
+      @AccountRequest TAccountRequest accountRequest,
+      @PathVariable UUID campaignId,
+      @Valid @RequestBody ApplyCampaignRequest request) {
+    ApplyDiscountResponse result = campaignService.applyCampaign(accountRequest, request);
+    return ResponseEntity.ok(RestResponse.<ApplyDiscountResponse>builder()
+        .statusCode(HttpStatus.OK.value())
+        .data(result)
+        .message("Campaign applied successfully")
+        .build());
+  }
+
+  @PatchMapping("/{campaignId}/schedule")
+  @Operation(summary = "Update campaign schedule")
+  public ResponseEntity<RestResponse<Void>> updateSchedule(
+      @AccountRequest TAccountRequest accountRequest,
+      @PathVariable UUID campaignId,
+      @Valid @RequestBody UpdateScheduleRequest request) {
+    campaignService.updateCampaignSchedule(accountRequest, campaignId, request);
+    return ResponseEntity.ok(RestResponse.<Void>builder()
+        .statusCode(HttpStatus.OK.value())
+        .message("Campaign schedule updated successfully")
+        .build());
+  }
+
+  @PatchMapping("/{campaignId}/target-audience")
+  @Operation(summary = "Update campaign target audience")
+  public ResponseEntity<RestResponse<Void>> updateTargetAudience(
+      @AccountRequest TAccountRequest accountRequest,
+      @PathVariable UUID campaignId,
+      @Valid @RequestBody UpdateTargetAudienceRequest request) {
+    campaignService.updateTargetAudience(accountRequest, campaignId, request);
+    return ResponseEntity.ok(RestResponse.<Void>builder()
+        .statusCode(HttpStatus.OK.value())
+        .message("Campaign target audience updated successfully")
+        .build());
   }
 
   @GetMapping("/{campaignId}/performance")
-  public ResponseEntity<PerformanceMetricsResponse> getPerformance(
+  @Operation(summary = "Get campaign performance metrics")
+  public ResponseEntity<RestResponse<PerformanceMetricsResponse>> getPerformance(
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID campaignId) {
-    return ResponseEntity.ok(campaignService.getPerformanceMetrics(accountRequest, campaignId));
+    PerformanceMetricsResponse metrics = campaignService.getPerformanceMetrics(accountRequest, campaignId);
+    return ResponseEntity.ok(RestResponse.<PerformanceMetricsResponse>builder()
+        .statusCode(HttpStatus.OK.value())
+        .data(metrics)
+        .message("Campaign performance metrics retrieved successfully")
+        .build());
   }
 }
