@@ -21,32 +21,31 @@ import com.winnguyen1905.promotion.model.request.UpdatePromotionProgramRequest;
 import com.winnguyen1905.promotion.model.response.PagedResponse;
 import com.winnguyen1905.promotion.model.response.PromotionProgramVm;
 import com.winnguyen1905.promotion.model.response.RestResponse;
+import com.winnguyen1905.promotion.secure.AccountRequest;
 import com.winnguyen1905.promotion.secure.TAccountRequest;
 
 import io.swagger.v3.oas.annotations.Operation;
-// Swagger imports removed to avoid dependency issues
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/promotion-programs")
 @RequiredArgsConstructor
-// @Tag(name = "Promotion Programs", description = "Promotion Program Management
-// API")
+@Tag(name = "Promotion Programs", description = "Promotion Program Management API")
 public class PromotionProgramController {
 
   private final PromotionProgramService promotionProgramService;
 
   @PostMapping
-  // @Operation(summary = "Create a new promotion program")
+  @Operation(summary = "Create a new promotion program")
   public ResponseEntity<RestResponse<Void>> createPromotionProgram(
-      TAccountRequest accountRequest,
+      @AccountRequest TAccountRequest accountRequest,
       @Valid @RequestBody CreatePromotionProgramRequest request) {
-
     promotionProgramService.createPromotionProgram(accountRequest, request);
-
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(RestResponse.<Void>builder()
+            .statusCode(HttpStatus.CREATED.value())
             .message("Promotion program created successfully")
             .build());
   }
@@ -54,28 +53,26 @@ public class PromotionProgramController {
   @GetMapping("/{id}")
   @Operation(summary = "Get promotion program by ID")
   public ResponseEntity<RestResponse<PromotionProgramVm>> getPromotionProgram(
-      TAccountRequest accountRequest,
+      @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID id) {
-
     PromotionProgramVm program = promotionProgramService.getPromotionProgramById(accountRequest, id);
-
     return ResponseEntity.ok(RestResponse.<PromotionProgramVm>builder()
+        .statusCode(HttpStatus.OK.value())
         .data(program)
         .message("Promotion program retrieved successfully")
         .build());
   }
 
-  @GetMapping
+  @PostMapping("/search")
   @Operation(summary = "Search promotion programs")
   public ResponseEntity<RestResponse<PagedResponse<PromotionProgramVm>>> getPromotionPrograms(
-      TAccountRequest accountRequest,
-      SearchPromotionProgramRequest searchRequest,
+      @AccountRequest TAccountRequest accountRequest,
+      @RequestBody SearchPromotionProgramRequest searchRequest,
       Pageable pageable) {
-
     PagedResponse<PromotionProgramVm> programs = promotionProgramService.getPromotionPrograms(
         accountRequest, searchRequest, pageable);
-
     return ResponseEntity.ok(RestResponse.<PagedResponse<PromotionProgramVm>>builder()
+        .statusCode(HttpStatus.OK.value())
         .data(programs)
         .message("Promotion programs retrieved successfully")
         .build());
@@ -84,12 +81,11 @@ public class PromotionProgramController {
   @GetMapping("/active")
   @Operation(summary = "Get active promotion programs")
   public ResponseEntity<RestResponse<PagedResponse<PromotionProgramVm>>> getActivePrograms(
-      TAccountRequest accountRequest,
+      @AccountRequest TAccountRequest accountRequest,
       Pageable pageable) {
-
     PagedResponse<PromotionProgramVm> programs = promotionProgramService.getActivePrograms(accountRequest, pageable);
-
     return ResponseEntity.ok(RestResponse.<PagedResponse<PromotionProgramVm>>builder()
+        .statusCode(HttpStatus.OK.value())
         .data(programs)
         .message("Active promotion programs retrieved successfully")
         .build());
@@ -98,12 +94,11 @@ public class PromotionProgramController {
   @GetMapping("/my-programs")
   @Operation(summary = "Get user's promotion programs")
   public ResponseEntity<RestResponse<PagedResponse<PromotionProgramVm>>> getUserPrograms(
-      TAccountRequest accountRequest,
+      @AccountRequest TAccountRequest accountRequest,
       Pageable pageable) {
-
     PagedResponse<PromotionProgramVm> programs = promotionProgramService.getUserPrograms(accountRequest, pageable);
-
     return ResponseEntity.ok(RestResponse.<PagedResponse<PromotionProgramVm>>builder()
+        .statusCode(HttpStatus.OK.value())
         .data(programs)
         .message("User promotion programs retrieved successfully")
         .build());
@@ -112,13 +107,12 @@ public class PromotionProgramController {
   @PutMapping("/{id}")
   @Operation(summary = "Update promotion program")
   public ResponseEntity<RestResponse<Void>> updatePromotionProgram(
-      TAccountRequest accountRequest,
+      @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID id,
       @Valid @RequestBody UpdatePromotionProgramRequest request) {
-
     promotionProgramService.updatePromotionProgram(accountRequest, id, request);
-
     return ResponseEntity.ok(RestResponse.<Void>builder()
+        .statusCode(HttpStatus.OK.value())
         .message("Promotion program updated successfully")
         .build());
   }
@@ -126,12 +120,11 @@ public class PromotionProgramController {
   @DeleteMapping("/{id}")
   @Operation(summary = "Delete promotion program")
   public ResponseEntity<RestResponse<Void>> deletePromotionProgram(
-      TAccountRequest accountRequest,
+      @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID id) {
-
     promotionProgramService.deletePromotionProgram(accountRequest, id);
-
     return ResponseEntity.ok(RestResponse.<Void>builder()
+        .statusCode(HttpStatus.OK.value())
         .message("Promotion program deleted successfully")
         .build());
   }
@@ -139,12 +132,11 @@ public class PromotionProgramController {
   @PostMapping("/{id}/activate")
   @Operation(summary = "Activate promotion program")
   public ResponseEntity<RestResponse<Void>> activateProgram(
-      TAccountRequest accountRequest,
+      @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID id) {
-
     promotionProgramService.activateProgram(accountRequest, id);
-
     return ResponseEntity.ok(RestResponse.<Void>builder()
+        .statusCode(HttpStatus.OK.value())
         .message("Promotion program activated successfully")
         .build());
   }
@@ -152,12 +144,11 @@ public class PromotionProgramController {
   @PostMapping("/{id}/pause")
   @Operation(summary = "Pause promotion program")
   public ResponseEntity<RestResponse<Void>> pauseProgram(
-      TAccountRequest accountRequest,
+      @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID id) {
-
     promotionProgramService.pauseProgram(accountRequest, id);
-
     return ResponseEntity.ok(RestResponse.<Void>builder()
+        .statusCode(HttpStatus.OK.value())
         .message("Promotion program paused successfully")
         .build());
   }
@@ -165,12 +156,11 @@ public class PromotionProgramController {
   @PostMapping("/{id}/expire")
   @Operation(summary = "Expire promotion program")
   public ResponseEntity<RestResponse<Void>> expireProgram(
-      TAccountRequest accountRequest,
+      @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID id) {
-
     promotionProgramService.expireProgram(accountRequest, id);
-
     return ResponseEntity.ok(RestResponse.<Void>builder()
+        .statusCode(HttpStatus.OK.value())
         .message("Promotion program expired successfully")
         .build());
   }

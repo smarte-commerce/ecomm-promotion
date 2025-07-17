@@ -24,6 +24,10 @@ public interface VendorPromotionParticipationService {
       UUID programId,
       Pageable pageable);
 
+  PagedResponse<VendorParticipationVm> getParticipationsByStatus(TAccountRequest accountRequest,
+      Status status,
+      Pageable pageable);
+
   void updateParticipationStatus(TAccountRequest accountRequest, UUID id, Status status, String reason);
 
   void approveParticipation(TAccountRequest accountRequest, UUID id);
@@ -33,6 +37,8 @@ public interface VendorPromotionParticipationService {
   void withdrawParticipation(TAccountRequest accountRequest, UUID id, String reason);
 
   void updateParticipation(TAccountRequest accountRequest, UUID id, VendorParticipationRequest request);
+
+  void deleteParticipation(TAccountRequest accountRequest, UUID id);
 
   void calculatePerformanceMetrics(UUID participationId);
 }
