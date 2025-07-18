@@ -1,0 +1,961 @@
+{
+	"info": {
+		"_postman_id": "promotion-service-api",
+		"name": "Promotion Service API",
+		"description": "Complete API collection for testing the Promotion Service microservice endpoints including campaigns, promotion programs, discounts, flash sales, vendor participation, usage tracking, commissions, and analytics.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{authToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"exec": [
+					"// Set dynamic data for testing",
+					"pm.globals.set('timestamp', new Date().getTime());",
+					"pm.globals.set('randomId', pm.variables.replaceIn('{{$randomUUID}}'));",
+					"pm.globals.set('futureDate', new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString());"
+				],
+				"type": "text/javascript"
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8084",
+			"type": "string"
+		},
+		{
+			"key": "authToken",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.token",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Campaigns",
+			"item": [
+				{
+					"name": "Create Campaign",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Winter Holiday Sale 2024\",\n  \"description\": \"Season's biggest sale with amazing discounts\",\n  \"campaignType\": \"SEASONAL\",\n  \"startDate\": \"{{futureDate}}\",\n  \"endDate\": \"2024-12-31T23:59:59Z\",\n  \"budget\": 150000.0,\n  \"targetAudience\": {\n    \"customerTiers\": [\"PREMIUM\", \"VIP\"],\n    \"regions\": [\"US\", \"EU\"],\n    \"ageRange\": {\"min\": 18, \"max\": 70}\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/campaigns",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "campaigns"]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Campaign created successfully', function() {",
+									"    pm.response.to.have.status(201);",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.message).to.include('successfully');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Get Campaign by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/campaigns/10000000-1000-1000-1000-100000000001",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "campaigns", "10000000-1000-1000-1000-100000000001"]
+						}
+					}
+				},
+				{
+					"name": "Search Campaigns",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"campaignType\": \"SEASONAL\",\n  \"status\": \"ACTIVE\",\n  \"startDateFrom\": \"2024-01-01T00:00:00Z\",\n  \"startDateTo\": \"2024-12-31T23:59:59Z\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/campaigns/search?page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "campaigns", "search"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Activate Campaign",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/campaigns/10000000-1000-1000-1000-100000000002/activate",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "campaigns", "10000000-1000-1000-1000-100000000002", "activate"]
+						}
+					}
+				},
+				{
+					"name": "Assign Discounts to Campaign",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n  \"30000000-3000-3000-3000-300000000001\",\n  \"30000000-3000-3000-3000-300000000002\"\n]"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/campaigns/10000000-1000-1000-1000-100000000001/assign-discounts",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "campaigns", "10000000-1000-1000-1000-100000000001", "assign-discounts"]
+						}
+					}
+				},
+				{
+					"name": "Get Campaign Statistics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/campaigns/10000000-1000-1000-1000-100000000002/statistics",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "campaigns", "10000000-1000-1000-1000-100000000002", "statistics"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Promotion Programs",
+			"item": [
+				{
+					"name": "Create Promotion Program",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"campaignId\": \"10000000-1000-1000-1000-100000000001\",\n  \"name\": \"Holiday Bundle Deals\",\n  \"description\": \"Special bundle discounts for holidays\",\n  \"programType\": \"BUNDLE\",\n  \"startDate\": \"{{futureDate}}\",\n  \"endDate\": \"2024-12-31T23:59:59Z\",\n  \"priority\": 2,\n  \"isStackable\": true,\n  \"platformCommissionRate\": 0.04,\n  \"requiredVendorContribution\": 25.0,\n  \"visibility\": \"PUBLIC\",\n  \"usageLimitGlobal\": 1000,\n  \"termsConditions\": \"Bundle program terms and conditions\",\n  \"autoApply\": false\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/promotion-programs",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "promotion-programs"]
+						}
+					}
+				},
+				{
+					"name": "Get Promotion Program by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/promotion-programs/20000000-2000-2000-2000-200000000001",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "promotion-programs", "20000000-2000-2000-2000-200000000001"]
+						}
+					}
+				},
+				{
+					"name": "Search Promotion Programs",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"programType\": \"DISCOUNT\",\n  \"status\": \"ACTIVE\",\n  \"isStackable\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/promotion-programs/search?page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "promotion-programs", "search"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Active Programs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/promotion-programs/active?page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "promotion-programs", "active"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Activate Program",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/promotion-programs/20000000-2000-2000-2000-200000000003/activate",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "promotion-programs", "20000000-2000-2000-2000-200000000003", "activate"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Discounts",
+			"item": [
+				{
+					"name": "Create Discount",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"programId\": \"20000000-2000-2000-2000-200000000001\",\n  \"discountType\": \"PERCENTAGE\",\n  \"appliesTo\": \"ALL\",\n  \"discountCategory\": \"PRODUCT\",\n  \"name\": \"New Year 15% Off\",\n  \"description\": \"15% discount for New Year celebration\",\n  \"code\": \"NEWYEAR15\",\n  \"value\": 15.0,\n  \"maxDiscountAmount\": 100.0,\n  \"minOrderValue\": 80.0,\n  \"startDate\": \"{{futureDate}}\",\n  \"endDate\": \"2025-01-15T23:59:59Z\",\n  \"usageLimitTotal\": 2000,\n  \"usageLimitPerCustomer\": 2,\n  \"isActive\": true,\n  \"isPublic\": true,\n  \"autoApply\": false,\n  \"productIds\": [\"03000000-0000-4000-8000-000000000001\", \"03000000-0000-4000-8000-000000000002\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discounts",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discounts"]
+						}
+					}
+				},
+				{
+					"name": "Get Discount by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discounts/30000000-3000-3000-3000-300000000001",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discounts", "30000000-3000-3000-3000-300000000001"]
+						}
+					}
+				},
+				{
+					"name": "Search Discounts",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"discountType\": \"PERCENTAGE\",\n  \"isActive\": true,\n  \"minValue\": 10.0,\n  \"maxValue\": 50.0\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discounts/search?page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discounts", "search"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Assign Products to Discount",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"discountId\": \"30000000-3000-3000-3000-300000000003\",\n  \"productIds\": [\n    \"03000000-0000-4000-8000-000000000003\",\n    \"03000000-0000-4000-8000-000000000004\"\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discounts/30000000-3000-3000-3000-300000000003/assign-products",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discounts", "30000000-3000-3000-3000-300000000003", "assign-products"]
+						}
+					}
+				},
+				{
+					"name": "Claim Discount",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discounts/30000000-3000-3000-3000-300000000006/claim",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discounts", "30000000-3000-3000-3000-300000000006", "claim"]
+						}
+					}
+				},
+				{
+					"name": "Check Discount Validity",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discounts/30000000-3000-3000-3000-300000000001/validity",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discounts", "30000000-3000-3000-3000-300000000001", "validity"]
+						}
+					}
+				},
+				{
+					"name": "Apply Discount to Cart",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"shopId\": \"11111111-1111-4111-8111-111111111111\",\n  \"customerId\": \"11111111-1111-4111-8111-111111111111\",\n  \"discountId\": \"30000000-3000-3000-3000-300000000003\",\n  \"customerCartWithShop\": {\n    \"shopId\": \"11111111-1111-4111-8111-111111111111\",\n    \"cartItems\": [\n      {\n        \"productVariantId\": \"04000000-0000-4000-8000-000000000001\",\n        \"quantity\": 1,\n        \"price\": 180.0,\n        \"isSelected\": true\n      }\n    ],\n    \"priceStatistic\": {\n      \"totalProductPrice\": 180.0,\n      \"totalShipFee\": 15.0,\n      \"finalPrice\": 195.0\n    }\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discounts/apply-to-cart",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discounts", "apply-to-cart"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Flash Sales",
+			"item": [
+				{
+					"name": "Create Flash Sale",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"programId\": \"20000000-2000-2000-2000-200000000003\",\n  \"countdownStart\": \"{{futureDate}}\",\n  \"countdownEnd\": \"2024-12-25T23:59:59Z\",\n  \"maxQuantity\": 200,\n  \"priceTiers\": {\n    \"tiers\": [\n      {\"quantity\": 50, \"discount\": 0.20},\n      {\"quantity\": 100, \"discount\": 0.30},\n      {\"quantity\": 150, \"discount\": 0.40}\n    ]\n  },\n  \"isNotifyEnabled\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/flash-sales",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "flash-sales"]
+						}
+					}
+				},
+				{
+					"name": "Get Flash Sale by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/flash-sales/{{flashSaleId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "flash-sales", "{{flashSaleId}}"]
+						}
+					}
+				},
+				{
+					"name": "Get Active Flash Sales",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/flash-sales/active",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "flash-sales", "active"]
+						}
+					}
+				},
+				{
+					"name": "Get Upcoming Flash Sales",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/flash-sales/upcoming",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "flash-sales", "upcoming"]
+						}
+					}
+				},
+				{
+					"name": "Purchase Flash Sale Item",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/flash-sales/{{flashSaleId}}/purchase?quantity=2",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "flash-sales", "{{flashSaleId}}", "purchase"],
+							"query": [
+								{
+									"key": "quantity",
+									"value": "2"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Vendor Participation",
+			"item": [
+				{
+					"name": "Request Participation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"vendorId\": \"20000000-0000-4000-8000-000000000001\",\n  \"programId\": \"20000000-2000-2000-2000-200000000001\",\n  \"participationType\": \"VOLUNTARY\",\n  \"vendorContributionRate\": 0.25,\n  \"expectedDiscountRate\": 0.25,\n  \"minDiscountAmount\": 5.0,\n  \"maxDiscountAmount\": 150.0,\n  \"productSelection\": \"CATEGORY\",\n  \"acceptedTerms\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/vendor-promotion-participations",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "vendor-promotion-participations"]
+						}
+					}
+				},
+				{
+					"name": "Get Participation by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/vendor-promotion-participations/{{participationId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "vendor-promotion-participations", "{{participationId}}"]
+						}
+					}
+				},
+				{
+					"name": "Get Vendor Participations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/vendor-promotion-participations/vendor/10000000-0000-4000-8000-000000000001?page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "vendor-promotion-participations", "vendor", "10000000-0000-4000-8000-000000000001"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Program Participations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/vendor-promotion-participations/program/20000000-2000-2000-2000-200000000002?page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "vendor-promotion-participations", "program", "20000000-2000-2000-2000-200000000002"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Approve Participation",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/vendor-promotion-participations/{{participationId}}/approve",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "vendor-promotion-participations", "{{participationId}}", "approve"]
+						}
+					}
+				},
+				{
+					"name": "Reject Participation",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/vendor-promotion-participations/{{participationId}}/reject?reason=Insufficient contribution rate",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "vendor-promotion-participations", "{{participationId}}", "reject"],
+							"query": [
+								{
+									"key": "reason",
+									"value": "Insufficient contribution rate"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Pending Approval Participations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/vendor-promotion-participations/pending-approval?page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "vendor-promotion-participations", "pending-approval"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Discount Usage",
+			"item": [
+				{
+					"name": "Record Discount Usage",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"customerId\": \"11111111-1111-4111-8111-111111111111\",\n  \"programId\": \"20000000-2000-2000-2000-200000000002\",\n  \"discountId\": \"30000000-3000-3000-3000-300000000003\",\n  \"orderId\": \"{{randomId}}\",\n  \"usageCount\": 1,\n  \"discountAmount\": 45.0,\n  \"cashbackAmount\": 0.0,\n  \"pointsEarned\": 450\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discount-usages",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discount-usages"]
+						}
+					}
+				},
+				{
+					"name": "Get Discount Usage by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discount-usages/{{usageId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discount-usages", "{{usageId}}"]
+						}
+					}
+				},
+				{
+					"name": "Get Customer Discount Usage",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discount-usages/customer/11111111-1111-4111-8111-111111111111?page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discount-usages", "customer", "11111111-1111-4111-8111-111111111111"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Discount Usage History",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discount-usages/discount/30000000-3000-3000-3000-300000000003?page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discount-usages", "discount", "30000000-3000-3000-3000-300000000003"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Program Usage History",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discount-usages/program/20000000-2000-2000-2000-200000000002?page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discount-usages", "program", "20000000-2000-2000-2000-200000000002"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Commissions",
+			"item": [
+				{
+					"name": "Get Commission by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/promotion-commissions/{{commissionId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "promotion-commissions", "{{commissionId}}"]
+						}
+					}
+				},
+				{
+					"name": "Get Vendor Commissions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/promotion-commissions/vendor/20000000-0000-4000-8000-000000000001?page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "promotion-commissions", "vendor", "20000000-0000-4000-8000-000000000001"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Program Commissions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/promotion-commissions/program/20000000-2000-2000-2000-200000000002?page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "promotion-commissions", "program", "20000000-2000-2000-2000-200000000002"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Commissions by Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/promotion-commissions/status/PENDING?page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "promotion-commissions", "status", "PENDING"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Payment Status",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/promotion-commissions/{{commissionId}}/payment-status?status=PAID&transactionId=TXN_{{timestamp}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "promotion-commissions", "{{commissionId}}", "payment-status"],
+							"query": [
+								{
+									"key": "status",
+									"value": "PAID"
+								},
+								{
+									"key": "transactionId",
+									"value": "TXN_{{timestamp}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Process Commission Payment",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/promotion-commissions/{{commissionId}}/process",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "promotion-commissions", "{{commissionId}}", "process"]
+						}
+					}
+				},
+				{
+					"name": "Get Total Vendor Commission",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/promotion-commissions/vendor/20000000-0000-4000-8000-000000000001/total?status=PAID",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "promotion-commissions", "vendor", "20000000-0000-4000-8000-000000000001", "total"],
+							"query": [
+								{
+									"key": "status",
+									"value": "PAID"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Analytics",
+			"item": [
+				{
+					"name": "Get Analytics by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/promotion-analytics/{{analyticsId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "promotion-analytics", "{{analyticsId}}"]
+						}
+					}
+				},
+				{
+					"name": "Get Program Analytics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/promotion-analytics/program/20000000-2000-2000-2000-200000000002",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "promotion-analytics", "program", "20000000-2000-2000-2000-200000000002"]
+						}
+					}
+				},
+				{
+					"name": "Get Program Analytics by Date Range",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/promotion-analytics/program/20000000-2000-2000-2000-200000000002/date-range?startDate=2024-01-01&endDate=2024-01-31",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "promotion-analytics", "program", "20000000-2000-2000-2000-200000000002", "date-range"],
+							"query": [
+								{
+									"key": "startDate",
+									"value": "2024-01-01"
+								},
+								{
+									"key": "endDate",
+									"value": "2024-01-31"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Program ROI",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/promotion-analytics/program/20000000-2000-2000-2000-200000000002/roi?startDate=2024-01-01&endDate=2024-01-31",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "promotion-analytics", "program", "20000000-2000-2000-2000-200000000002", "roi"],
+							"query": [
+								{
+									"key": "startDate",
+									"value": "2024-01-01"
+								},
+								{
+									"key": "endDate",
+									"value": "2024-01-31"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Program Conversion Rate",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/promotion-analytics/program/20000000-2000-2000-2000-200000000002/conversion-rate?startDate=2024-01-01&endDate=2024-01-31",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "promotion-analytics", "program", "20000000-2000-2000-2000-200000000002", "conversion-rate"],
+							"query": [
+								{
+									"key": "startDate",
+									"value": "2024-01-01"
+								},
+								{
+									"key": "endDate",
+									"value": "2024-01-31"
+								}
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+} 

@@ -10,66 +10,94 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.winnguyen1905.promotion.core.service.DiscountUsageService;
 import com.winnguyen1905.promotion.model.request.CreateDiscountUsageRequest;
 import com.winnguyen1905.promotion.model.response.DiscountUsageVm;
 import com.winnguyen1905.promotion.model.response.PagedResponse;
+import com.winnguyen1905.promotion.model.response.RestResponse;
 import com.winnguyen1905.promotion.secure.AccountRequest;
-import com.winnguyen1905.promotion.secure.ResponseMessage;
 import com.winnguyen1905.promotion.secure.TAccountRequest;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("discount-usages")
+@RequestMapping("/api/v1/discount-usages")
 @RequiredArgsConstructor
+@Tag(name = "Discount Usages", description = "Discount Usage Tracking API")
 public class DiscountUsageController {
 
   private final DiscountUsageService discountUsageService;
 
   @PostMapping
-  @ResponseStatus(HttpStatus.CREATED)
-  @ResponseMessage(message = "Record discount usage success")
-  public ResponseEntity<Void> recordUsage(
+  @Operation(summary = "Record discount usage")
+  public ResponseEntity<RestResponse<Void>> recordUsage(
       @AccountRequest TAccountRequest accountRequest,
       @Valid @RequestBody CreateDiscountUsageRequest request) {
     discountUsageService.recordDiscountUsage(accountRequest, request);
-    return ResponseEntity.status(HttpStatus.CREATED).build();
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(RestResponse.<Void>builder()
+            .statusCode(HttpStatus.CREATED.value())
+            .message("Discount usage recorded successfully")
+            .build());
   }
 
   @GetMapping("/{id}")
-  @ResponseMessage(message = "Get discount usage detail success")
-  public ResponseEntity<DiscountUsageVm> getById(
+  @Operation(summary = "Get discount usage by ID")
+  public ResponseEntity<RestResponse<DiscountUsageVm>> getById(
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID id) {
-    return ResponseEntity.ok(discountUsageService.getDiscountUsageById(accountRequest, id));
+    DiscountUsageVm usage = discountUsageService.getDiscountUsageById(accountRequest, id);
+    return ResponseEntity.ok(RestResponse.<DiscountUsageVm>builder()
+        .statusCode(HttpStatus.OK.value())
+        .data(usage)
+        .message("Discount usage retrieved successfully")
+        .build());
   }
 
   @GetMapping("/customer/{customerId}")
-  public ResponseEntity<PagedResponse<DiscountUsageVm>> getByCustomer(
+  @Operation(summary = "Get discount usage by customer")
+  public ResponseEntity<RestResponse<PagedResponse<DiscountUsageVm>>> getByCustomer(
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID customerId,
       Pageable pageable) {
-    return ResponseEntity.ok(discountUsageService.getCustomerDiscountUsage(accountRequest, customerId, pageable));
+    PagedResponse<DiscountUsageVm> usages = discountUsageService.getCustomerDiscountUsage(accountRequest, customerId, pageable);
+    return ResponseEntity.ok(RestResponse.<PagedResponse<DiscountUsageVm>>builder()
+        .statusCode(HttpStatus.OK.value())
+        .data(usages)
+        .message("Customer discount usages retrieved successfully")
+        .build());
   }
 
   @GetMapping("/discount/{discountId}")
-  public ResponseEntity<PagedResponse<DiscountUsageVm>> getByDiscount(
+  @Operation(summary = "Get discount usage by discount")
+  public ResponseEntity<RestResponse<PagedResponse<DiscountUsageVm>>> getByDiscount(
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID discountId,
       Pageable pageable) {
-    return ResponseEntity.ok(discountUsageService.getDiscountUsageHistory(accountRequest, discountId, pageable));
+    PagedResponse<DiscountUsageVm> usages = discountUsageService.getDiscountUsageHistory(accountRequest, discountId, pageable);
+    return ResponseEntity.ok(RestResponse.<PagedResponse<DiscountUsageVm>>builder()
+        .statusCode(HttpStatus.OK.value())
+        .data(usages)
+        .message("Discount usage history retrieved successfully")
+        .build());
   }
 
   @GetMapping("/program/{programId}")
-  public ResponseEntity<PagedResponse<DiscountUsageVm>> getByProgram(
+  @Operation(summary = "Get discount usage by program")
+  public ResponseEntity<RestResponse<PagedResponse<DiscountUsageVm>>> getByProgram(
       @AccountRequest TAccountRequest accountRequest,
       @PathVariable UUID programId,
       Pageable pageable) {
-    return ResponseEntity.ok(discountUsageService.getProgramUsageHistory(accountRequest, programId, pageable));
+    PagedResponse<DiscountUsageVm> usages = discountUsageService.getProgramUsageHistory(accountRequest, programId, pageable);
+    return ResponseEntity.ok(RestResponse.<PagedResponse<DiscountUsageVm>>builder()
+        .statusCode(HttpStatus.OK.value())
+        .data(usages)
+        .message("Program usage history retrieved successfully")
+        .build());
   }
 } 
