@@ -140,6 +140,22 @@ public class VendorPromotionParticipationServiceImpl implements VendorPromotionP
   }
 
   @Override
+  @Transactional(readOnly = true)
+  public PagedResponse<VendorParticipationVm> getParticipationsByStatus(TAccountRequest accountRequest, Status status,
+      Pageable pageable) {
+
+    // Only admins can view participations by status
+    validateAdminAccess(accountRequest);
+
+    List<EVendorPromotionParticipation> allParticipations = participationRepository.findAll();
+    List<EVendorPromotionParticipation> statusParticipations = allParticipations.stream()
+        .filter(p -> p.getStatus() == status)
+        .collect(Collectors.toList());
+
+    return mapListToPagedResponse(statusParticipations, pageable);
+  }
+
+  @Override
   @Transactional
   public void updateParticipationStatus(TAccountRequest accountRequest, UUID id, Status status, String reason) {
     validateAdminAccess(accountRequest);
@@ -250,6 +266,24 @@ public class VendorPromotionParticipationServiceImpl implements VendorPromotionP
     participationRepository.save(participation);
 
     log.info("Performance metrics calculated for participation {}", participationId);
+  }
+
+  @Override
+  @Transactional
+  public void deleteParticipation(TAccountRequest accountRequest, UUID id) {
+    validateAdminAccess(accountRequest);
+
+    EVendorPromotionParticipation participation = participationRepository.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Participation not found"));
+
+    // Only allow deletion of non-active participations
+    if (participation.getStatus() == Status.APPROVED) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Cannot delete active participation. Withdraw it first.");
+    }
+
+    participationRepository.delete(participation);
+    log.info("Participation {} deleted by admin {}", id, accountRequest.id());
   }
 
   // Private helper methods
