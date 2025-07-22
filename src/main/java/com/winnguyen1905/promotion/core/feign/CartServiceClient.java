@@ -10,10 +10,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
 
+import com.winnguyen1905.promotion.config.FeignClientConfig;
 import com.winnguyen1905.promotion.model.request.CustomerCart;
 
 @Service
-@FeignClient(name = "CART-SERVICE", url = "http://localhost:8090")
+@FeignClient(name = "CART-SERVICE", url = "http://localhost:8090", configuration = FeignClientConfig.class)
 public interface CartServiceClient {
   @GetMapping("/carts/{id}")
   ResponseEntity<CustomerCart> getCustomerCartDetail(@PathVariable UUID id);
